@@ -22,7 +22,7 @@ sub wanted;
 
 
 # Traverse desired filesystems
-File::Find::find({wanted => \&wanted}, '.');
+File::Find::find({wanted => \&wanted}, shift);
 print @filesl1;
 exit;
 
