@@ -3,6 +3,7 @@
         if 0; #$running_under_some_shell
 
 use strict;
+use warnings;
 use File::Find ();
 
 # Set the variable $File::Find::dont_use_nlink if you're using AFS,
@@ -14,12 +15,15 @@ use vars qw/*name *dir *prune/;
 *dir    = *File::Find::dir;
 *prune  = *File::Find::prune;
 
+# my $filesl1 = []; #Vl.empty array referrence
+my @filesl1;
 sub wanted;
 
 
 
 # Traverse desired filesystems
 File::Find::find({wanted => \&wanted}, '.');
+print @filesl1;
 exit;
 
 
@@ -30,6 +34,6 @@ sub wanted {
     $File::Find::name =~ /^\.\/\.git\z/s &&
     ($File::Find::prune = 1)
     ||
-    print("$name\n");
+    push(@filesl1, $name);
 }
 
