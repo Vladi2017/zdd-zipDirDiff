@@ -34,6 +34,6 @@ sub wanted {
     $File::Find::name =~ /^\.\/\.git\z/s &&
     ($File::Find::prune = 1)
     ||
-    push(@filesl1, $name);
+    -B _ || push(@filesl1, $name); 
 }
 
