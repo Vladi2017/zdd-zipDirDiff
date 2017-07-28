@@ -32,20 +32,24 @@ sub wanted;
 
 # Traverse desired filesystems
 File::Find::find({wanted => \&wanted}, $testpath);
-@dirFileNamesL1 = sort @dirFileNamesL1;
 print "directory:\n@dirFileNamesL1\n";
 for my $member ($zip->members) {
   my $fn = $member->fileName;
   push (@zipFileNamesL1, $fn)
     unless ($member->isBinaryFile || $fn =~ /\.git/);
 }
+@zipFileNamesL1 = sort {
+  my @a = $a =~ /\//g;
+  my @b = $b =~ /\//g;
+  if (@a == @b) {return($a cmp $b)};
+  return 1 if (@a > @b);
+  return -1;
+} @zipFileNamesL1;
 print "zipFile:\n@zipFileNamesL1\n"; #Vl.zipmembersList1
 exit;
 
-
 sub wanted {
     my ($dev,$ino,$mode,$nlink,$uid,$gid);
-
     (($dev,$ino,$mode,$nlink,$uid,$gid) = lstat($_)) &&
     $File::Find::name =~ /\/\.git\z/s &&
     ($File::Find::prune = 1)
