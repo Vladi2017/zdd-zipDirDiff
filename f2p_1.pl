@@ -24,7 +24,7 @@ use vars qw/*name *dir *prune/;
 *prune  = *File::Find::prune;
 
 # my $filesl1 = []; #Vl.empty array referrence
-my @filesl1; #filesList1 in directory ($testpath)
+my @dirFileNamesL1; #filesList1 in directory ($testpath)
 my @zipFileNamesL1;
 sub wanted;
 
@@ -32,9 +32,12 @@ sub wanted;
 
 # Traverse desired filesystems
 File::Find::find({wanted => \&wanted}, $testpath);
-print "directory:\n@filesl1\n";
+@dirFileNamesL1 = sort @dirFileNamesL1;
+print "directory:\n@dirFileNamesL1\n";
 for my $member ($zip->members) {
-  push (@zipFileNamesL1, $member->fileName) unless $member->isBinaryFile;
+  my $fn = $member->fileName;
+  push (@zipFileNamesL1, $fn)
+    unless ($member->isBinaryFile || $fn =~ /\.git/);
 }
 print "zipFile:\n@zipFileNamesL1\n"; #Vl.zipmembersList1
 exit;
@@ -47,6 +50,6 @@ sub wanted {
     $File::Find::name =~ /\/\.git\z/s &&
     ($File::Find::prune = 1)
     ||
-    -B _ || push(@filesl1, $name); 
+    -B _ || push(@dirFileNamesL1, $name); 
 }
 
