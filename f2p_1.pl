@@ -39,10 +39,17 @@ for my $member ($zip->members) {
     unless ($member->isBinaryFile || $fn =~ /\.git/);
 }
 @zipFileNamesL1 = sort {
-  my @a = $a =~ /\//g;
-  my @b = $b =~ /\//g;
-  if (@a == @b) {return($a cmp $b)};
-  return 1 if (@a > @b);
+  my @aa = $a =~ /.+?\//g;
+  my @bb = $b =~ /.+?\//g;
+  if (@aa == @bb) {print scalar @aa, scalar @bb, "\n"; return($a cmp $b)};
+  my $min;
+  if (@aa < @bb) {$min = @aa} else {$min = @bb}
+  for (my $i = 0; $i < $min; $i++) {
+    next if ($aa[$i] eq $bb[$i]);
+    return 1 if ($aa[$i] gt $bb[$i]);
+    return -1;
+  }
+  return 1 if (@aa > @bb);
   return -1;
 } @zipFileNamesL1;
 print "zipFile:\n@zipFileNamesL1\n"; #Vl.zipmembersList1
