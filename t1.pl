@@ -36,5 +36,10 @@ my @array = qw( Apples Oranges Brains Toes Kiwi);
 my $search = "Toes";
 my $index = first { $array[$_] eq $search } 0 .. $#array; ##this is OK. returns the searched index
 ## my $index = first { $array[$_] eq $search } @array; Vl.this is not ok.. Argument "Apples" isn't numeric in array element at ./t1.pl line 38.
-print "index of $search = $index\n";
+print "List::Util::first method, index of $search = $index\n";
+$index = $search ~~ @array;
+print "Smart matching approach, index of $search = $index\n"; ##Vl.Smartmatch just return a boolean value, we can't use for (1st) index.
+$search = "nuEste";
+$index = $search ~~ @array;
+print "Smart matching approach, index of $search = $index\n";
 
