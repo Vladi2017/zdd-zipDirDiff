@@ -1,11 +1,11 @@
 #! /usr/bin/perl -w
     eval 'exec /usr/bin/perl -S $0 ${1+"$@"}'
         if 0; #$running_under_some_shell
-
 use strict;
 use warnings;
 use File::Find ();
 use Archive::Zip;
+use List::Util qw(first);
 
 my $Usage = "$0 file.zip [test_path]\n  (default test_path is '.')\n";
 die $Usage unless ( @ARGV and -f $ARGV[0] );
@@ -16,7 +16,7 @@ my $testpath = shift || '.';
 my $zip = Archive::Zip->new( $zipfile )
     or die "Archive::Zip was unable to read $zipfile\n";
 
-my ( @missing_from_path, @altered );
+my ( @dir_only, @zip_only, @common, @altered );
 # for the convenience of &wanted calls, including -eval statements:
 use vars qw/*name *dir *prune/;
 *name   = *File::Find::name;
@@ -53,6 +53,18 @@ for my $member ($zip->members) {
   return -1;
 } @zipFileNamesL1;
 print "zipFile:\n@zipFileNamesL1\n"; #Vl.zipmembersList1
+foreach (@dirFileNamesL1) {
+  if ($_ ~~ @zipFileNamesL1) {
+    my $common = $_;
+    push @common, $common;
+    my $offset = first {$zipFileNamesL1[$_] eq $common} 0..$#zipFileNamesL1;
+    splice @zipFileNamesL1, $offset, 1;
+  } else { push @dir_only, $_ }
+}
+@zip_only = @zipFileNamesL1;
+print "dir_only:\n@dir_only\n";
+print "zip_only:\n@zip_only\n";
+print "common:\n@common\n";
 exit;
 
 sub wanted {
