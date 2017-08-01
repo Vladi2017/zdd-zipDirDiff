@@ -7,12 +7,14 @@ use File::Find ();
 use Archive::Zip;
 use List::Util qw(first);
 
-my $Usage = "$0 file.zip [test_path]\n  (default test_path is '.')\n";
-die $Usage unless ( @ARGV and -f $ARGV[0] );
+my $Usage = "$0 test_path\n  (default test_path is '.')\n";
+die $Usage unless ( @ARGV and -d $ARGV[0] );
 
-my $zipfile = shift;
-my $testpath = shift || '.';
-
+my $testpath = shift;
+$testpath =~ /(\w.*$)/;
+$testpath = $1;
+$testpath =~ /^(\w+)/;
+my $zipfile = $1 . ".zip";
 my $zip = Archive::Zip->new( $zipfile )
     or die "Archive::Zip was unable to read $zipfile\n";
 
@@ -28,15 +30,13 @@ my @dirFileNamesL1; #filesList1 in directory ($testpath)
 my @zipFileNamesL1;
 sub wanted;
 
-
-
 # Traverse desired filesystems
 File::Find::find({wanted => \&wanted}, $testpath);
 print "directory:\n@dirFileNamesL1\n";
 for my $member ($zip->members) {
   my $fn = $member->fileName;
   push (@zipFileNamesL1, $fn)
-    unless ($member->isBinaryFile || $fn =~ /\.git/);
+    unless ($member->isBinaryFile || !($fn =~ /$testpath/) || $fn =~ /\.git/);
 }
 @zipFileNamesL1 = sort {
   my @aa = $a =~ /.+?\//g;
