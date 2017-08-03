@@ -7,7 +7,7 @@ use File::Find ();
 use Archive::Zip;
 use List::Util qw(first);
 
-my $Usage = "$0 test_path\n  (default test_path is '.')\n";
+my $Usage = "Usage:\n$0 test_path\n  (test_path must not be a file)\n";
 die $Usage unless ( @ARGV and -d $ARGV[0] );
 
 my $testpath = shift;
@@ -16,7 +16,8 @@ $testpath = $1;
 $testpath =~ /^(\w+)/;
 my $zipfile = $1 . ".zip";
 my $zip = Archive::Zip->new( $zipfile )
-    or die "Archive::Zip was unable to read $zipfile\n";
+    or die "Archive::Zip was unable to read $zipfile\n"
+         . "$zipfile and $1 (sub)directory must be at the same level in the hierarchy tree (both in the same directory).\n";
 
 my ( @dir_only, @zip_only, @common, @altered );
 # for the convenience of &wanted calls, including -eval statements:
@@ -32,7 +33,7 @@ sub wanted;
 
 # Traverse desired filesystems
 File::Find::find({wanted => \&wanted}, $testpath);
-print "directory:\n@dirFileNamesL1\n";
+print "\ndirectory:\n@dirFileNamesL1\n";
 for my $member ($zip->members) {
   my $fn = $member->fileName;
   push (@zipFileNamesL1, $fn)
@@ -53,8 +54,9 @@ for my $member ($zip->members) {
   return -1;
 } @zipFileNamesL1;
 print "zipFile:\n@zipFileNamesL1\n"; #Vl.zipmembersList1
+no warnings 'experimental';
 foreach (@dirFileNamesL1) {
-  if ($_ ~~ @zipFileNamesL1) {
+  if ($_ ~~ @zipFileNamesL1) { #Vl.Smartmatch is experimental
     my $common = $_;
     push @common, $common;
     my $offset = first {$zipFileNamesL1[$_] eq $common} 0..$#zipFileNamesL1;
@@ -64,7 +66,26 @@ foreach (@dirFileNamesL1) {
 @zip_only = @zipFileNamesL1;
 print "dir_only:\n@dir_only\n";
 print "zip_only:\n@zip_only\n";
-print "common:\n@common\n";
+print "common_list:\n@common\n";
+print "\nAltered files:\n";
+my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime);
+foreach (@common) {
+  my $zipM = $zip->memberNamed($_); #Vl. zipM==zipMember
+  my $dirM = $_;
+  ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime) = lstat($dirM);
+  if (-s _ == $zipM->uncompressedSize) {
+    open(my $fileHandler, '<', $dirM) or die "Can't open $dirM: $!\n";
+    local $/; #Vl.slurp mode
+    $_ = <$fileHandler>;
+    close $fileHandler;
+    my $testCRC = $zip->computeCRC32($_);
+    next if ($testCRC eq $zipM->crc32);
+  }
+  print "    $dirM\n";
+  print "mtime, dirFile: " . scalar(localtime($mtime))
+    . "    zipFile: " . scalar(localtime($zipM->lastModTime())) . "\n";
+  print "size[B], dirFile: " . scalar(-s _) . "    zipFile: " . scalar($zipM->uncompressedSize) . "\n";
+}
 exit;
 
 sub wanted {
