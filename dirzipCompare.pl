@@ -82,9 +82,9 @@ foreach (@common) {
     next if ($testCRC eq $zipM->crc32);
   }
   print "    $dirM\n";
-  print "mtime, dirFile: " . scalar(localtime($mtime))
-    . "    zipFile: " . scalar(localtime($zipM->lastModTime())) . "\n";
-  print "size[B], dirFile: " . scalar(-s _) . "    zipFile: " . scalar($zipM->uncompressedSize) . "\n";
+  print "mtime/size[B], dirFile: " . scalar(localtime($mtime)) . " / " . scalar(-s _)
+    . "    zipFile: " . scalar(localtime($zipM->lastModTime())) . " / " . scalar($zipM->uncompressedSize) . "\n";
+  ## print "size[B], dirFile: " . scalar(-s _) . "    zipFile: " . scalar($zipM->uncompressedSize) . "\n";
 }
 exit;
 
