@@ -12,7 +12,8 @@ die $Usage unless ( @ARGV and -d $ARGV[0] );
 
 my $testpath = shift;
 $testpath =~ /(\w.*$)/;
-$testpath = $1;
+if ($1 =~ /\/$/) {$testpath = $1;}
+else {$testpath = $1 . "/";}
 $testpath =~ /^(\w+)/;
 my $zipfile = $1 . ".zip";
 my $zip = Archive::Zip->new( $zipfile )
@@ -37,7 +38,8 @@ print "\ndirectory:\n@dirFileNamesL1\n";
 for my $member ($zip->members) {
   my $fn = $member->fileName;
   push (@zipFileNamesL1, $fn)
-    unless ($member->isBinaryFile || !($fn =~ /$testpath/) || $fn =~ /\.git/);
+##    unless ($member->isBinaryFile || !($fn =~ /$testpath/) || $fn =~ /\.git/); ##Vl.isBinaryFile is not reliable..
+  unless ($member->isDirectory || !($fn =~ /$testpath/) || $fn =~ /\.git/);
 }
 @zipFileNamesL1 = sort {
   my @aa = $a =~ /.+?\//g;
@@ -94,6 +96,7 @@ sub wanted {
     $File::Find::name =~ /\/\.git\z/s &&
     ($File::Find::prune = 1)
     ||
-    -B _ || push(@dirFileNamesL1, $name); 
+##    -B _ || push(@dirFileNamesL1, $name); ##Vl. some .htm files are seen as binary..
+    -d _ || push(@dirFileNamesL1, $name);
 }
 
