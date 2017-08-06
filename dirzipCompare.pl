@@ -20,9 +20,12 @@ for(my $i = 0; $i < $#ARGV; $i += 2) {
 
 undef $maxdepth if ($maxdepth == 1000);
 my $testpath = $ARGV[$#ARGV];
-$testpath =~ /(\w.*$)/;
-if ($1 =~ /\/$/) {$testpath = $1;}
-else {$testpath = $1 . "/";}
+($testpath) = ($testpath =~ /(\w.*)$/);
+for ($testpath) {
+  no warnings 'experimental';
+  $testpath = $_ when /\/$/;
+  default {$testpath = $_ . "/";}
+}
 $testpath =~ /^(\w+)/;
 my $zipfile = $1 . ".zip";
 my $zip = Archive::Zip->new( $zipfile )
