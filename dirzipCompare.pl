@@ -7,10 +7,19 @@ use File::Find ();
 use Archive::Zip;
 use List::Util qw(first);
 
-my $Usage = "Usage:\n$0 test_path\n  (test_path must not be a file)\n";
-die $Usage unless ( @ARGV and -d $ARGV[0] );
+my $Usage = "Usage:\n$0 [--options] test_path\n  (test_path must not be a file)\n";
+die $Usage unless (@ARGV and -d $ARGV[$#ARGV]);
+my $maxdepth = 1000;
+use v5.14;
+for(my $i = 0; $i < $#ARGV; $i += 2) {
+  no warnings 'experimental';
+  for ($ARGV[$i]) {
+    $maxdepth = $ARGV[$i + 1] when /^--maxdepth/ || /^-m/;
+  }
+}
 
-my $testpath = shift;
+undef $maxdepth if ($maxdepth == 1000);
+my $testpath = $ARGV[$#ARGV];
 $testpath =~ /(\w.*$)/;
 if ($1 =~ /\/$/) {$testpath = $1;}
 else {$testpath = $1 . "/";}
@@ -32,14 +41,16 @@ my @dirFileNamesL1; #filesList1 in directory ($testpath)
 my @zipFileNamesL1;
 sub wanted;
 
+my @slashes = $testpath =~ /\//g;
 # Traverse desired filesystems
 File::Find::find({wanted => \&wanted}, $testpath);
 print "\ndirectory:\n@dirFileNamesL1\n";
 for my $member ($zip->members) {
   my $fn = $member->fileName;
+  my @s = $fn =~ /\//g;
   push (@zipFileNamesL1, $fn)
 ##    unless ($member->isBinaryFile || !($fn =~ /$testpath/) || $fn =~ /\.git/); ##Vl.isBinaryFile is not reliable..
-  unless ($member->isDirectory || !($fn =~ /$testpath/) || $fn =~ /\.git/);
+  unless ((defined $maxdepth && @s > @slashes + $maxdepth) || $member->isDirectory || !($fn =~ /$testpath/) || $fn =~ /\.git/);
 }
 @zipFileNamesL1 = sort {
   my @aa = $a =~ /.+?\//g;
@@ -92,8 +103,9 @@ exit;
 
 sub wanted {
     my ($dev,$ino,$mode,$nlink,$uid,$gid);
+    my @s = $name =~ /\//g;
     (($dev,$ino,$mode,$nlink,$uid,$gid) = lstat($_)) &&
-    $File::Find::name =~ /\/\.git\z/s &&
+    ((defined $maxdepth && -d _ && @s >= @slashes + $maxdepth) || $File::Find::name =~ /\/\.git\z/s) &&
     ($File::Find::prune = 1)
     ||
 ##    -B _ || push(@dirFileNamesL1, $name); ##Vl. some .htm files are seen as binary..
