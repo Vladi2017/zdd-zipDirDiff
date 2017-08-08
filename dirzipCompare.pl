@@ -45,10 +45,12 @@ use vars qw/*name *dir *prune/;
 my @dirFileNamesL1; #filesList1 in directory ($testpath)
 my @zipFileNamesL1;
 sub wanted;
+sub byname;
 
 my @slashes = $testpath =~ /\//g;
 # Traverse desired filesystems
 File::Find::find({wanted => \&wanted}, $testpath);
+@dirFileNamesL1 = sort  byname @dirFileNamesL1;
 print "\ndirectory:\n@dirFileNamesL1\n";
 for my $member ($zip->members) {
   my $fn = $member->fileName;
@@ -58,20 +60,7 @@ for my $member ($zip->members) {
   unless ((defined $maxdepth && @s > @slashes + $maxdepth) || $member->isDirectory || !($fn =~ /$testpath/) || $fn =~ /\.git/ ||
     ($nobinary && $member->isBinaryFile));
 }
-@zipFileNamesL1 = sort {
-  my @aa = $a =~ /.+?\//g;
-  my @bb = $b =~ /.+?\//g;
-  if (@aa == @bb) {print scalar @aa, scalar @bb, "\n"; return($a cmp $b)};
-  my $min;
-  if (@aa < @bb) {$min = @aa} else {$min = @bb}
-  for (my $i = 0; $i < $min; $i++) {
-    next if ($aa[$i] eq $bb[$i]);
-    return 1 if ($aa[$i] gt $bb[$i]);
-    return -1;
-  }
-  return 1 if (@aa > @bb);
-  return -1;
-} @zipFileNamesL1;
+@zipFileNamesL1 = sort  byname @zipFileNamesL1;
 print "zipFile:\n@zipFileNamesL1\n"; #Vl.zipmembersList1
 no warnings 'experimental';
 foreach (@dirFileNamesL1) {
@@ -107,6 +96,20 @@ foreach (@common) {
 }
 exit;
 
+sub byname {
+  my @aa = $a =~ /.+?\//g;
+  my @bb = $b =~ /.+?\//g;
+  return($a cmp $b) if (@aa == @bb);
+  my $min;
+  if (@aa < @bb) {$min = @aa} else {$min = @bb}
+  for (my $i = 0; $i < $min; $i++) {
+    next if ($aa[$i] eq $bb[$i]);
+    return 1 if ($aa[$i] gt $bb[$i]);
+    return -1;
+  }
+  return 1 if (@aa > @bb);
+  return -1;
+}
 sub wanted {
     my ($dev,$ino,$mode,$nlink,$uid,$gid);
     my @s = $name =~ /\//g;
