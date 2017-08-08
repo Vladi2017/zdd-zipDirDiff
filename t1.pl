@@ -31,6 +31,7 @@ print "vales %seen: @values1\n";
 print "unique array/list : @unique\n";
 =cut
 
+=test3
 use List::Util qw(first);
 my @array = qw( Apples Oranges Brains Toes Kiwi);
 my $search = "Toes";
@@ -42,4 +43,17 @@ print "Smart matching approach, index of $search = $index\n"; ##Vl.Smartmatch ju
 $search = "nuEste";
 $index = $search ~~ @array;
 print "Smart matching approach, index of $search = $index\n";
+=cut
 
+=ignore1 tr - Transliterates all occurrences of the characters found in the search list with the corresponding character in the replacement list.
+sub byalphabetic {
+  $a =~ tr/\//~/;
+  $b =~ tr/\//~/;
+  return $a cmp $b;
+}
+my @list1 = qw(compare1/dir1/dir11/f2 compare1/dir2/f1 compare1/dir2/df compare1/dir2/dir21/fuser compare1/V4.pl
+  compare1/try1.pl compare1/dir1/dir11/f1 compare1/dirzipCompare.pl compare1/t1.pl);
+print "@list1\n";
+my @list2 = sort byalphabetic @list1;
+print "@list2\n";
+=cut

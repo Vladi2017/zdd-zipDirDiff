@@ -7,14 +7,16 @@ use File::Find ();
 use Archive::Zip;
 use List::Util qw(first);
 
-my $Usage = "Usage:\n$0 [--options] test_path\n  (test_path must not be a file)\n";
+my $Usage = "Usage:\n$0 [--long_options] [-short_options] test_path\n  (test_path must not be a file)\n";
 die $Usage unless (@ARGV and -d $ARGV[$#ARGV]);
 my $maxdepth = 1000;
+undef my $nobinary;
 use v5.14;
-for(my $i = 0; $i < $#ARGV; $i += 2) {
+for(my $i = 0; $i < $#ARGV; $i++) {
   no warnings 'experimental';
   for ($ARGV[$i]) {
-    $maxdepth = $ARGV[$i + 1] when /^--maxdepth/ || /^-m/;
+    $maxdepth = $ARGV[++$i] when /^--maxdepth$/ || /^-m$/;
+    $nobinary = 1 when /^--nobinary$/ || /^-nb$/;
   }
 }
 
@@ -53,7 +55,8 @@ for my $member ($zip->members) {
   my @s = $fn =~ /\//g;
   push (@zipFileNamesL1, $fn)
 ##    unless ($member->isBinaryFile || !($fn =~ /$testpath/) || $fn =~ /\.git/); ##Vl.isBinaryFile is not reliable..
-  unless ((defined $maxdepth && @s > @slashes + $maxdepth) || $member->isDirectory || !($fn =~ /$testpath/) || $fn =~ /\.git/);
+  unless ((defined $maxdepth && @s > @slashes + $maxdepth) || $member->isDirectory || !($fn =~ /$testpath/) || $fn =~ /\.git/ ||
+    ($nobinary && $member->isBinaryFile));
 }
 @zipFileNamesL1 = sort {
   my @aa = $a =~ /.+?\//g;
@@ -112,6 +115,6 @@ sub wanted {
     ($File::Find::prune = 1)
     ||
 ##    -B _ || push(@dirFileNamesL1, $name); ##Vl. some .htm files are seen as binary..
-    -d _ || push(@dirFileNamesL1, $name);
+    -d _ || ($nobinary && -B _) || push(@dirFileNamesL1, $name);
 }
 
