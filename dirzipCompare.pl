@@ -7,16 +7,18 @@ use File::Find ();
 use Archive::Zip;
 use List::Util qw(first);
 
-my $Usage = "Usage:\n$0 [--long_options] [-short_options] test_path\n  (test_path must not be a file)\n";
+my $Usage = "Usage:\n$0 [--long_options] [-short_options] [zipFile.zip] test_path\n  (test_path must not be a file)\n";
 die $Usage unless (@ARGV and -d $ARGV[$#ARGV]);
 my $maxdepth = 1000;
 undef my $nobinary;
+undef my $zipfile;
 use v5.14;
 for(my $i = 0; $i < $#ARGV; $i++) {
   no warnings 'experimental';
   for ($ARGV[$i]) {
     $maxdepth = $ARGV[++$i] when /^--maxdepth$/ || /^-m$/;
     $nobinary = 1 when /^--nobinary$/ || /^-nb$/;
+		$zipfile = $_ when /\.zip$/;
   }
 }
 
@@ -29,7 +31,7 @@ for ($testpath) {
   default {$testpath = $_ . "/";}
 }
 $testpath =~ /^(\w+)/;
-my $zipfile = $1 . ".zip";
+$zipfile = $1 . ".zip" unless $zipfile;
 my $zip = Archive::Zip->new( $zipfile )
     or die "Archive::Zip was unable to read $zipfile\n"
          . "$zipfile and $1 (sub)directory must be at the same level in the hierarchy tree (both in the same directory).\n";
