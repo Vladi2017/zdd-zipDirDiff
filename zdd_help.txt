@@ -1,0 +1,25 @@
+1:32 PM Thursday, November 08, 2018;
+
+NAME
+	zdd - ZipDirDiff.., compare zipFile.zip	archive against test_path (sub)directory.
+		
+SYNOPSIS
+	zdd [--nobinary|-nb] [--maxdepth k|-m k] [zipFile.zip] test_path
+		
+DESCRIPTION
+	Both zipFile.zip and test_path must reside in the same directory. If there is no zipFile.zip in the command line test_path is compared against test_path.zip file. test_path/.git subdir is not scanned by default. If two files (in the zip archive and test_path (sub)directory, including relative paths) have same size computeCRC32 is done to establish similarity.
+	Switches (OPTIONS) are in nmap-style (e.g. "$zdd -nbm 2 test_path" will not work). Use  "$zdd -nb -m 2 test_path" instead.
+
+OPTIONS
+-m k, --maxdepth k
+	Comparation depth into test_path (sub)directory hierarchy, k>=0. If k=0 no test_path subdirs are searched.
+-nb, --nobinary
+	Ignore binaries.
+-v1, --verbose1
+	Also prints the common_list of files.
+-v2, --verbose2
+	Also prints directory and zipFile files.
+
+EXAMPLES
+	$zdd -nb -m 2 test_path		#asume there is test_path.zip archive as well
+	$zdd zipFile.zip test_path

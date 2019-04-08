@@ -8,10 +8,13 @@ use File::Find ();
 use Archive::Zip;
 use List::Util qw(first);
 
-my $Usage = "Usage:\n$0 [--long_options] [-short_options] [zipFile.zip] test_path\n  (test_path must not be a file)\n";
+my $Usage = "Usage:\n$0 [--long_options] [-short_options] [zipFile.zip] test_path\n  (test_path must not be a file).
+Also see zdd_help.txt\n";
 die $Usage unless (@ARGV and -d $ARGV[$#ARGV]);
 my $maxdepth = 1000;
 undef my $nobinary;
+undef my $verbose1;
+undef my $verbose2;
 undef my $zipfile;
 use v5.14;
 for(my $i = 0; $i < $#ARGV; $i++) {
@@ -19,7 +22,9 @@ for(my $i = 0; $i < $#ARGV; $i++) {
   for ($ARGV[$i]) {
     $maxdepth = $ARGV[++$i] when /^--maxdepth$/ || /^-m$/;
     $nobinary = 1 when /^--nobinary$/ || /^-nb$/;
-		$zipfile = $_ when /\.zip$/;
+    $verbose1 = 1 when /^--verbose1$/ || /^-v1$/;
+    $verbose2 = 1 when /^--verbose2$/ || /^-v2$/;
+	$zipfile = $_ when /\.zip$/;
   }
 }
 
@@ -54,7 +59,7 @@ my @slashes = $testpath =~ /\//g;
 # Traverse desired filesystems
 File::Find::find({wanted => \&wanted}, $testpath);
 @dirFileNamesL1 = sort  byname @dirFileNamesL1;
-print "\ndirectory:\n@dirFileNamesL1\n";
+print "\ndirectory:\n@dirFileNamesL1\n" if $verbose2;
 for my $member ($zip->members) {
   my $fn = $member->fileName;
   my @s = $fn =~ /\//g;
@@ -64,7 +69,7 @@ for my $member ($zip->members) {
     ($nobinary && $member->isBinaryFile));
 }
 @zipFileNamesL1 = sort  byname @zipFileNamesL1;
-print "zipFile:\n@zipFileNamesL1\n"; #Vl.zipmembersList1
+print "zipFile:\n@zipFileNamesL1\n" if $verbose2; #Vl.zipmembersList1
 no warnings 'experimental';
 foreach (@dirFileNamesL1) {
   if ($_ ~~ @zipFileNamesL1) { #Vl.Smartmatch is experimental
@@ -77,7 +82,7 @@ foreach (@dirFileNamesL1) {
 @zip_only = @zipFileNamesL1;
 print "dir_only:\n@dir_only\n";
 print "zip_only:\n@zip_only\n";
-print "common_list:\n@common\n";
+print "common_list:\n@common\n" if $verbose1 || $verbose2;
 print "\nAltered files:\n";
 my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime);
 foreach (@common) {
