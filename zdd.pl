@@ -83,12 +83,11 @@ foreach (@dirFileNamesL1) {
 print "dir_only:\n@dir_only\n";
 print "zip_only:\n@zip_only\n";
 print "common_list:\n@common\n" if $verbose1 || $verbose2;
-print "\nAltered files:\n";
-my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime);
+print "\nAltered files.\n"; printf("%-46s","mtime/size[B] for dirFile:"); printf("%-45s","mtime/size[B] for zipFile:"); print("FileName:\n");
 foreach (@common) {
   my $zipM = $zip->memberNamed($_); #Vl. zipM==zipMember
   my $dirM = $_;
-  ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime) = lstat($dirM);
+  my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime) = lstat($dirM);
   if (-s _ == $zipM->uncompressedSize) {
     open(my $fileHandler, '<', $dirM) or die "Can't open $dirM: $!\n";
     local $/; #Vl.slurp mode
@@ -97,9 +96,9 @@ foreach (@common) {
     my $testCRC = $zip->computeCRC32($_);
     next if ($testCRC eq $zipM->crc32);
   }
-  print "    $dirM\n";
-  print "mtime/size[B], dirFile: " . scalar(localtime($mtime)) . " / " . scalar(-s _)
-    . "    zipFile: " . scalar(localtime($zipM->lastModTime())) . " / " . scalar($zipM->uncompressedSize) . "\n";
+  my $cmp = ($mtime > $zipM->lastModTime()); ##say $cmp;
+  printf "%-27s%14s     %-27s%14s", scalar(localtime($mtime)) . ($cmp ? "*" : ""), scalar(-s _), ##Vld.file test (perlfunc) the special filehandle "_"
+    scalar(localtime($zipM->lastModTime())) . ($cmp ? "" : "*"), scalar($zipM->uncompressedSize); print "    $dirM\n";
   ## print "size[B], dirFile: " . scalar(-s _) . "    zipFile: " . scalar($zipM->uncompressedSize) . "\n";
 }
 exit;
@@ -128,4 +127,24 @@ sub wanted {
 ##    -B _ || push(@dirFileNamesL1, $name); ##Vl. some .htm files are seen as binary..
     -d _ || ($nobinary && -B _) || push(@dirFileNamesL1, $name);
 }
+
+=begin comment1
+
+(minimum) width
+                Arguments are usually formatted to be only as wide as required
+                to display the given value. You can override the width by
+                putting a number here, or get the width from the next argument
+                (with "*") or from a specified argument (e.g., with "*2$"):
+                 printf "<%s>", "a";       # prints "<a>"
+                 printf "<%6s>", "a";      # prints "<     a>"
+                 printf "<%*s>", 6, "a";   # prints "<     a>"
+                 printf '<%*2$s>', "a", 6; # prints "<     a>"
+                 printf "<%2s>", "long";   # prints "<long>" (does not truncate)
+                If a field width obtained through "*" is negative, it has the
+                same effect as the "-" flag: left-justification.
+
+=end comment1
+
+=cut
+
 
