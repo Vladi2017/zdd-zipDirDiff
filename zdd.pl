@@ -1,9 +1,7 @@
-#! /usr/bin/perl -w
-    eval 'exec /usr/bin/perl -S $0 ${1+"$@"}'
-        if 0; #$running_under_some_shell
 ##Vld. zdd = ZipDirDiff
 use strict;
-use warnings;
+# use warnings;
+no warnings 'redefine';
 use File::Find ();
 use Archive::Zip;
 use List::Util qw(first);
@@ -44,10 +42,10 @@ my $zip = Archive::Zip->new( $zipfile )
 
 my ( @dir_only, @zip_only, @common, @altered );
 # for the convenience of &wanted calls, including -eval statements:
-use vars qw/*name *dir *prune/;
-*name   = *File::Find::name;
-*dir    = *File::Find::dir;
-*prune  = *File::Find::prune;
+# use vars qw/*name *dir *prune/;
+# *name   = *File::Find::name;
+# *dir    = *File::Find::dir;
+# *prune  = *File::Find::prune;
 
 # my $filesl1 = []; #Vl.empty array referrence
 my @dirFileNamesL1; #filesList1 in directory ($testpath)
@@ -119,13 +117,13 @@ sub byname {
 }
 sub wanted {
     my ($dev,$ino,$mode,$nlink,$uid,$gid);
-    my @s = $name =~ /\//g;
+    my @s = $File::Find::name =~ /\//g;
     (($dev,$ino,$mode,$nlink,$uid,$gid) = lstat($_)) &&
     ((defined $maxdepth && -d _ && @s >= @slashes + $maxdepth) || $File::Find::name =~ /\/\.git\z/s) &&
     ($File::Find::prune = 1)
     ||
 ##    -B _ || push(@dirFileNamesL1, $name); ##Vl. some .htm files are seen as binary..
-    -d _ || ($nobinary && -B _) || push(@dirFileNamesL1, $name);
+    -d _ || ($nobinary && -B _) || push(@dirFileNamesL1, $File::Find::name);
 }
 
 =begin comment1
