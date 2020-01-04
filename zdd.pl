@@ -12,7 +12,7 @@ die $Usage unless (@ARGV and -d $ARGV[$#ARGV]);
 my $maxdepth = 1000;
 undef my $nobinary;
 undef my $verbose1;
-undef my $verbose2;
+undef my $verbose2; undef my $debug1;
 undef my $zipfile;
 use v5.14;
 for(my $i = 0; $i < $#ARGV; $i++) {
@@ -22,6 +22,7 @@ for(my $i = 0; $i < $#ARGV; $i++) {
     $nobinary = 1 when /^--nobinary$/ || /^-nb$/;
     $verbose1 = 1 when /^--verbose1$/ || /^-v1$/;
     $verbose2 = 1 when /^--verbose2$/ || /^-v2$/;
+	$debug1 = 1 when /^--debug1$/ || /^-d1$/;
 	$zipfile = $_ when /\.zip$/;
   }
 }
@@ -63,9 +64,10 @@ for my $member ($zip->members) {
   my @s = $fn =~ /\//g;
   push (@zipFileNamesL1, $fn)
 ##    unless ($member->isBinaryFile || !($fn =~ /$testpath/) || $fn =~ /\.git/); ##Vl.isBinaryFile is not reliable..
-  unless ((defined $maxdepth && @s > @slashes + $maxdepth) || $member->isDirectory || !($fn =~ /$testpath/) || $fn =~ /\.git/ ||
+  unless ((defined $maxdepth && @s > @slashes + $maxdepth) || !($fn =~ /$testpath/) || $fn =~ /\.git/ ||
     ($nobinary && $member->isBinaryFile));
 }
+# print "zipFilePreSort:\n@zipFileNamesL1\n" if $verbose2; #Vl.zipmembersList1
 @zipFileNamesL1 = sort  byname @zipFileNamesL1;
 print "zipFile:\n@zipFileNamesL1\n" if $verbose2; #Vl.zipmembersList1
 no warnings 'experimental';
@@ -78,11 +80,22 @@ foreach (@dirFileNamesL1) {
   } else { push @dir_only, $_ }
 }
 @zip_only = @zipFileNamesL1;
-print "dir_only:\n@dir_only\n";
-print "zip_only:\n@zip_only\n";
+print "\ndir_only:\n" . ($debug1 ? "@dir_only\n" : "");
+my $isDir = "////";
+foreach (@dir_only) {
+  if (-d) { say $_; $isDir = $_; next }
+  say $_ unless (/$isDir/ or not $isDir = "////")
+}
+print "\nzip_only:\n" . ($debug1 ? "@zip_only\n" : "");
+$isDir = "////";
+foreach (@zip_only) {
+  if ($zip->memberNamed($_)->isDirectory) { say $_; $isDir = $_; next }
+  say $_ unless (/$isDir/ or not $isDir = "////")
+}
 print "common_list:\n@common\n" if $verbose1 || $verbose2;
-print "\nAltered files.\n"; printf("%-46s","mtime/size[B] for dirFile:"); printf("%-45s","mtime/size[B] for zipFile:"); print("FileName:\n");
+print "\nAltered files.\n"; printf("%-46s","mtime/size[B] for dir:"); printf("%-45s","mtime/size[B] for zipFile:"); print("FileName:\n");
 foreach (@common) {
+  next if -d;
   my $zipM = $zip->memberNamed($_); #Vl. zipM==zipMember
   my $dirM = $_;
   my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime) = lstat($dirM);
@@ -123,7 +136,7 @@ sub wanted {
     ($File::Find::prune = 1)
     ||
 ##    -B _ || push(@dirFileNamesL1, $name); ##Vl. some .htm files are seen as binary..
-    -d _ || ($nobinary && -B _) || push(@dirFileNamesL1, $File::Find::name);
+    ($nobinary && -B _) || push(@dirFileNamesL1, $File::Find::name . (-d ? '/' : ""));
 }
 
 =begin comment1
