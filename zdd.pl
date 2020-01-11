@@ -81,16 +81,16 @@ foreach (@dirFileNamesL1) {
 }
 @zip_only = @zipFileNamesL1;
 print "\ndir_only:\n" . ($debug1 ? "@dir_only\n" : "");
-my $isDir = "////";
+my $cDir = "////"; #Vld.currentDir
 foreach (@dir_only) {
-  if (-d) { say $_; $isDir = $_; next }
-  say $_ unless (/$isDir/ or not $isDir = "////")
+  if (-d and not /$cDir/) { say $_; $cDir = $_; next }
+  say $_ unless (/$cDir/ or not $cDir = "////")
 }
 print "\nzip_only:\n" . ($debug1 ? "@zip_only\n" : "");
-$isDir = "////";
+$cDir = "////";
 foreach (@zip_only) {
-  if ($zip->memberNamed($_)->isDirectory) { say $_; $isDir = $_; next }
-  say $_ unless (/$isDir/ or not $isDir = "////")
+  if ($zip->memberNamed($_)->isDirectory and not /$cDir/) { say $_; $cDir = $_; next }
+  say $_ unless (/$cDir/ or not $cDir = "////")
 }
 print "common_list:\n@common\n" if $verbose1 || $verbose2;
 print "\nAltered files.\n"; printf("%-46s","mtime/size[B] for dir:"); printf("%-45s","mtime/size[B] for zipFile:"); print("FileName:\n");
