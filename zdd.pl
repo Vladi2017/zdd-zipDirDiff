@@ -61,11 +61,18 @@ File::Find::find({wanted => \&wanted}, $testpath);
 print "\ndirectory:\n@dirFileNamesL1\n" if $verbose2;
 for my $member ($zip->members) {
   my $fn = $member->fileName;
+  next if $fn =~ /\.git/;
+  if (not $member->isDirectory) { ##Vld.to deal with Windows FileExplorer zipArchive bug..
+    $fn =~ /^(.*\/)/; #Vld.capturing greedy
+	if (not $zip->memberNamed($1)) {
+	  $zip->addDirectory($1);
+	  push (@zipFileNamesL1, $1)
+	}
+  }
   my @s = $fn =~ /\//g;
   push (@zipFileNamesL1, $fn)
 ##    unless ($member->isBinaryFile || !($fn =~ /$testpath/) || $fn =~ /\.git/); ##Vl.isBinaryFile is not reliable..
-  unless ((defined $maxdepth && @s > @slashes + $maxdepth) || !($fn =~ /$testpath/) || $fn =~ /\.git/ ||
-    ($nobinary && $member->isBinaryFile));
+    unless ((defined $maxdepth && @s > @slashes + $maxdepth) || !($fn =~ /$testpath/) || ($nobinary && $member->isBinaryFile));
 }
 # print "zipFilePreSort:\n@zipFileNamesL1\n" if $verbose2; #Vl.zipmembersList1
 @zipFileNamesL1 = sort  byname @zipFileNamesL1;
