@@ -8,6 +8,7 @@ use List::Util qw(first);
 
 my $Usage = "Usage:\n$0 [--long_options] [-short_options] [zipFile.zip] test_path\n  (test_path must not be a file).
 Also see zdd_help.txt\n";
+my $legend1 = "Legend: * = mark the newer file's version; ! = indicate that the older file's version has additional lines.";
 die $Usage unless (@ARGV and -d $ARGV[$#ARGV]);
 my $maxdepth = 1000;
 undef my $nobinary;
@@ -101,6 +102,8 @@ foreach (@zip_only) {
 }
 print "common_list:\n@common\n" if $verbose1 || $verbose2;
 print "\nAltered files.\n"; printf("%-46s","mtime/size[B] for dir:"); printf("%-45s","mtime/size[B] for zipFile:"); print("FileName:\n");
+my $tmpfile = "ttmpf".int(rand(100));
+my $cmp;
 foreach (@common) {
   next if -d;
   my $zipM = $zip->memberNamed($_); #Vl. zipM==zipMember
@@ -114,11 +117,27 @@ foreach (@common) {
     my $testCRC = $zip->computeCRC32($_);
     next if ($testCRC eq $zipM->crc32);
   }
-  my $cmp = ($mtime > $zipM->lastModTime()); ##say $cmp;
-  printf "%-27s%14s     %-27s%14s", scalar(localtime($mtime)) . ($cmp ? "*" : ""), scalar(-s _), ##Vld.file test (perlfunc) the special filehandle "_"
-    scalar(localtime($zipM->lastModTime())) . ($cmp ? "" : "*"), scalar($zipM->uncompressedSize); print "    $dirM\n";
+  $cmp = ($mtime > $zipM->lastModTime()); ##say $cmp;
+  undef my $flag; ##Vld. check if older file has additional lines
+  $flag = "bin" if -B _;
+  if (not $flag) {
+    $zip->extractMemberWithoutPaths({memberOrZipName => $zipM, name => $tmpfile});
+	my $diff1 = "\n" . $cmp ? qx(diff $dirM $tmpfile) : qx(diff $tmpfile $dirM);
+	$flag = "!" if $diff1 =~ /\015?\012\d+a/;
+	if (not $flag) {
+	  while ($diff1 =~ /\015?\012(\d+,)?(\d+)c(\d+),?(\d+)?/g) {
+	    my ($one,$four) = ($1,$4);
+		$one = $2 if $1 == 0; $four = $3 if $4 == 0;
+		if ($2 - $one < $four - $3) {$flag = "!"; last}
+	  }
+	}
+  }
+  unlink $tmpfile or warn "Could not delete temp file $tmpfile: $!" if -e $tmpfile;
+  printf "%-27s%14s     %-27s%14s", scalar(localtime($mtime)) . ($cmp ? "*$flag" : ""), scalar(-s _), ##Vld.file test (perlfunc) the special filehandle "_"
+    scalar(localtime($zipM->lastModTime())) . ($cmp ? "" : "*$flag"), scalar($zipM->uncompressedSize); print "    $dirM\n";
   ## print "size[B], dirFile: " . scalar(-s _) . "    zipFile: " . scalar($zipM->uncompressedSize) . "\n";
 }
+say defined $cmp ? $legend1 : "Common files are identical. OK!";
 exit;
 
 sub byname {
@@ -147,6 +166,12 @@ sub wanted {
 }
 
 =begin comment1
+
+batwings@VladiLaptopWXP /home/batwings/projects/perl/cmp1
+$ perl -e '1 && 1 && 0 || print "A ajuns aici\n";'
+A ajuns aici
+batwings@VladiLaptopWXP /home/batwings/projects/perl/cmp1
+$ perl -e '1 && 1 && 0 || 1 || print "A ajuns aici\n";
 
 (minimum) width
                 Arguments are usually formatted to be only as wide as required
