@@ -109,7 +109,7 @@ foreach (@common) {
   my $zipM = $zip->memberNamed($_); #Vl. zipM==zipMember
   my $dirM = $_;
   my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime) = lstat($dirM);
-  if (-s _ == $zipM->uncompressedSize) {
+  if (-s _ == $zipM->uncompressedSize) { ##Vld.file test (perlfunc) the special filehandle "_"
     open(my $fileHandler, '<', $dirM) or die "Can't open $dirM: $!\n";
     local $/; #Vl.slurp mode
     $_ = <$fileHandler>;
@@ -133,7 +133,7 @@ foreach (@common) {
 	}
   }
   unlink $tmpfile or warn "Could not delete temp file $tmpfile: $!" if -e $tmpfile;
-  printf "%-27s%14s     %-27s%14s", scalar(localtime($mtime)) . ($cmp ? "*$flag" : ""), scalar(-s _), ##Vld.file test (perlfunc) the special filehandle "_"
+  printf "%-27s%14s     %-27s%14s", scalar(localtime($mtime)) . ($cmp ? "*$flag" : ""), scalar($size),
     scalar(localtime($zipM->lastModTime())) . ($cmp ? "" : "*$flag"), scalar($zipM->uncompressedSize); print "    $dirM\n";
   ## print "size[B], dirFile: " . scalar(-s _) . "    zipFile: " . scalar($zipM->uncompressedSize) . "\n";
 }
