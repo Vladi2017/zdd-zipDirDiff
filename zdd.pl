@@ -8,7 +8,7 @@ use List::Util qw(first);
 
 my $Usage = "Usage:\n$0 [--long_options] [-short_options] [zipFile.zip] test_path\n  (test_path must not be a file).
 Also see zdd_help.txt\n";
-my $legend1 = "Legend: * = mark the newer file's version; ! = indicate that the older file's version has additional lines.";
+my $legend1 = "Legend: * = mark the newer file's version; ! = indicate that the older file's version has additional lines; bin = file detected as binary.";
 die $Usage unless (@ARGV and -d $ARGV[$#ARGV]);
 my $maxdepth = 1000;
 undef my $nobinary;
@@ -101,7 +101,7 @@ foreach (@zip_only) {
   say $_ unless (/$cDir/ or not $cDir = "////")
 }
 print "common_list:\n@common\n" if $verbose1 || $verbose2;
-print "\nAltered files.\n"; printf("%-46s","mtime/size[B] for dir:"); printf("%-45s","mtime/size[B] for zipFile:"); print("FileName:\n");
+print "\nAltered files.\n"; printf("%-50s","mtime/size[B] for dir:"); printf("%-50s","mtime/size[B] for zipFile:"); print("FileName:\n");
 my $tmpfile = "ttmpf".int(rand(100));
 my $cmp;
 foreach (@common) {
@@ -114,15 +114,14 @@ foreach (@common) {
     local $/; #Vl.slurp mode
     $_ = <$fileHandler>;
     close $fileHandler;
-    my $testCRC = $zip->computeCRC32($_);
-    next if ($testCRC eq $zipM->crc32);
+    next if $zip->computeCRC32($_) eq $zipM->crc32;
   }
   $cmp = ($mtime > $zipM->lastModTime()); ##say $cmp;
   undef my $flag; ##Vld. check if older file has additional lines
   $flag = "bin" if -B _;
   if (not $flag) {
     $zip->extractMemberWithoutPaths({memberOrZipName => $zipM, name => $tmpfile});
-	my $diff1 = "\n" . $cmp ? qx(diff $dirM $tmpfile) : qx(diff $tmpfile $dirM);
+	my $diff1 = "\n" . ($cmp ? qx(diff $dirM $tmpfile) : qx(diff $tmpfile $dirM));
 	$flag = "!" if $diff1 =~ /\015?\012\d+a/;
 	if (not $flag) {
 	  while ($diff1 =~ /\015?\012(\d+,)?(\d+)c(\d+),?(\d+)?/g) {
@@ -133,8 +132,8 @@ foreach (@common) {
 	}
   }
   unlink $tmpfile or warn "Could not delete temp file $tmpfile: $!" if -e $tmpfile;
-  printf "%-27s%14s     %-27s%14s", scalar(localtime($mtime)) . ($cmp ? "*$flag" : ""), scalar($size),
-    scalar(localtime($zipM->lastModTime())) . ($cmp ? "" : "*$flag"), scalar($zipM->uncompressedSize); print "    $dirM\n";
+  printf "%-29s%14s       %-29s%14s", scalar(localtime($mtime)) . ($cmp ? "*$flag" : ""), scalar($size),
+    scalar(localtime($zipM->lastModTime())) . ($cmp ? "" : "*$flag"), scalar($zipM->uncompressedSize); print "       $dirM\n";
   ## print "size[B], dirFile: " . scalar(-s _) . "    zipFile: " . scalar($zipM->uncompressedSize) . "\n";
 }
 say defined $cmp ? $legend1 : "Common files are identical. OK!";
