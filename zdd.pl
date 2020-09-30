@@ -1,3 +1,4 @@
+#!/usr/bin/perl
 ##Vld. zdd = ZipDirDiff
 use strict;
 # use warnings;

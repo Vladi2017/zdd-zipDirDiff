@@ -9,7 +9,9 @@ SYNOPSIS
 DESCRIPTION
 	This app is useful especially when you write on the same project on different machines and sometimes you need somehow to synchronize your work. zdd compare one zipped folder against his current directory counterpart (test_path). By default zdd prints founded differences in terms of dir_only files, zip_only files and altered files.
 	Both zipFile.zip and test_path must reside in the same directory. If there is no zipFile.zip parameter in the command line, test_path is compared against test_path.zip file. test_path/.git subdir is not scanned by default. If two files (in the zip archive and test_path (sub)directory, including relative paths) have same size, computeCRC32 is done to establish similarity.
-	For convenient the most recently altered files are "*" marked.
+	To assist your synchronization process:
+      - the most recently altered files are "*" marked.
+      - the most recently altered text files are "*!" marked if the older file counterpart has additional lines.
 	Switches (OPTIONS) are in nmap-style (e.g. "$zdd -nbm 2 test_path" will not work). Please use  "$zdd -nb -m 2 test_path" instead.
 
 OPTIONS
