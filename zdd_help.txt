@@ -1,3 +1,5 @@
+zdd_help.txt updates:
+11:37 PM Sunday, August 29, 2021;
 1:32 PM Thursday, November 08, 2018;
 
 NAME
@@ -11,8 +13,11 @@ DESCRIPTION
 	Both zipFile.zip and test_path must reside in the same directory. If there is no zipFile.zip parameter in the command line, test_path is compared against test_path.zip file. test_path/.git subdir is not scanned by default. If two files (in the zip archive and test_path (sub)directory, including relative paths) have same size, computeCRC32 is done to establish similarity.
 	To assist your synchronization process:
       - the most recently altered files are "*" marked.
-      - the most recently altered text files are "*!" marked if the older file counterpart has additional lines.
+      - the most recently altered text files are "*!" marked if the older file counterpart has additional lines which was deleted in the new file's version. (note_1)
 	Switches (OPTIONS) are in nmap-style (e.g. "$zdd -nbm 2 test_path" will not work). Please use  "$zdd -nb -m 2 test_path" instead.
+
+Notes:
+note_1. Even though the new version has more lines than the older one.
 
 OPTIONS
 -m k, --maxdepth k
@@ -27,6 +32,9 @@ OPTIONS
 EXAMPLES
 	$zdd -nb -m 2 test_path		#assume there is test_path.zip archive as well
 	$zdd zipFile.zip test_path
+
+OSs:
+  Linux, Cygwin / WXP - W10.
 
 DEPENDENCIES
 	Perl min. v5.14 with File::Find, Archive::Zip, List::Util modules.
