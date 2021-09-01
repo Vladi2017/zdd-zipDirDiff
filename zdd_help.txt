@@ -1,4 +1,5 @@
 zdd_help.txt updates:
+1:09 PM Wednesday, September 1, 2021
 11:37 PM Sunday, August 29, 2021;
 1:32 PM Thursday, November 08, 2018;
 
@@ -10,7 +11,7 @@ SYNOPSIS
 		
 DESCRIPTION
 	This app is useful especially when you write on the same project on different machines and sometimes you need somehow to synchronize your work. zdd compare one zipped folder against his current directory counterpart (test_path). By default zdd prints founded differences in terms of dir_only files, zip_only files and altered files.
-	Both zipFile.zip and test_path must reside in the same directory. If there is no zipFile.zip parameter in the command line, test_path is compared against test_path.zip file. test_path/.git subdir is not scanned by default. If two files (in the zip archive and test_path (sub)directory, including relative paths) have same size, computeCRC32 is done to establish similarity.
+	Both zipFile.zip and test_path must reside in the same directory. If there is no zipFile.zip parameter in the command line, test_path is compared against test_path.zip file. For .git subdirs please see note_2 below. If two files (in the zip archive and test_path (sub)directory, including relative paths) have same size, computeCRC32 is done to establish similarity.
 	To assist your synchronization process:
       - the most recently altered files are "*" marked.
       - the most recently altered text files are "*!" marked if the older file counterpart has additional lines which was deleted in the new file's version. (note_1)
@@ -18,12 +19,15 @@ DESCRIPTION
 
 Notes:
 note_1. Even though the new version has more lines than the older one.
+note_2. .git treatment: .git subdirs scanning is triggered by -g switch but in this case --maxdepth has no effect for .git position in test_path / zipFile directory hierarchy. All .git subdirs will be scanned. Furthermore, in order to prevent excessive cluttering, only .git/logs/ subdirs differences will be reported. This should be sufficient in order to evaluate similarities in git archives. In this respect to see (mostly) .git status use "zdd -m 0 -g zipFile.zip test_path".
 
 OPTIONS
 -m k, --maxdepth k
 	Comparison depth into test_path (sub)directory hierarchy, k>=0. If k=0 no test_path subdirs are searched.
 -nb, --nobinary
 	Ignore binaries.
+-g, --git
+  Also scan .git/ subdirectories.
 -v1, --verbose1
 	Also prints the common_list of files.
 -v2, --verbose2

@@ -16,6 +16,7 @@ undef my $nobinary;
 undef my $verbose1;
 undef my $verbose2; undef my $debug1;
 undef my $zipfile;
+undef my $gitF;
 use v5.14;
 for(my $i = 0; $i < $#ARGV; $i++) {
   no warnings 'experimental';
@@ -24,8 +25,9 @@ for(my $i = 0; $i < $#ARGV; $i++) {
     $nobinary = 1 when /^--nobinary$/ || /^-nb$/;
     $verbose1 = 1 when /^--verbose1$/ || /^-v1$/;
     $verbose2 = 1 when /^--verbose2$/ || /^-v2$/;
-	$debug1 = 1 when /^--debug1$/ || /^-d1$/;
-	$zipfile = $_ when /\.zip$/;
+    $debug1 = 1 when /^--debug1$/ || /^-d1$/;
+    $gitF = 1 when /^--git$/ || /^-g$/;
+    $zipfile = $_ when /\.zip$/;
   }
 }
 
@@ -53,17 +55,19 @@ my ( @dir_only, @zip_only, @common, @altered );
 # my $filesl1 = []; #Vl.empty array referrence
 my @dirFileNamesL1; #filesList1 in directory ($testpath)
 my @zipFileNamesL1;
-sub wanted;
-sub byname;
 
 my @slashes = $testpath =~ /\//g;
 # Traverse desired filesystems
 File::Find::find({wanted => \&wanted}, $testpath);
+File::Find::find(\&wantedGit, $testpath) if $gitF;
 @dirFileNamesL1 = sort  byname @dirFileNamesL1;
 print "\ndirectory:\n@dirFileNamesL1\n" if $verbose2;
 for my $member ($zip->members) {
+  my $except = 0;
   my $fn = $member->fileName;
-  next if $fn =~ /\.git/;
+  next if $fn =~ /\.git/ && !$gitF;
+  next if $fn =~ /\.git/ && !($fn =~ /\/\.git\/logs/s);
+  $except = 1 if $fn =~ /\.git/;
   if (not $member->isDirectory) { ##Vld.to deal with Windows FileExplorer zipArchive bug..
     $fn =~ /^(.*\/)/; #Vld.capturing greedy
 	if (not $zip->memberNamed($1)) {
@@ -74,7 +78,7 @@ for my $member ($zip->members) {
   my @s = $fn =~ /\//g;
   push (@zipFileNamesL1, $fn)
 ##    unless ($member->isBinaryFile || !($fn =~ /$testpath/) || $fn =~ /\.git/); ##Vl.isBinaryFile is not reliable..
-    unless ((defined $maxdepth && @s > @slashes + $maxdepth) || !($fn =~ /$testpath/) || ($nobinary && $member->isBinaryFile));
+    unless (!($fn =~ /$testpath/) || ((defined $maxdepth && @s > @slashes + $maxdepth) && !$except) || ($nobinary && $member->isBinaryFile));
 }
 # print "zipFilePreSort:\n@zipFileNamesL1\n" if $verbose2; #Vl.zipmembersList1
 @zipFileNamesL1 = sort  byname @zipFileNamesL1;
@@ -155,23 +159,29 @@ sub byname {
   return -1;
 }
 sub wanted {
-    my ($dev,$ino,$mode,$nlink,$uid,$gid);
+    # Vld.don't use "-d $File::Find::name" since the check is relative to $File::Find::dir..
+    # Just use "-d".., see tag zdd1 in C:\Users\mvman\Documents\MAI_VladiLaptopWXP\MyDocuments\stuff\Daily_workVladiLaptopWXP1\perl1\Perl1.txt
     my @s = $File::Find::name =~ /\//g;
-    (($dev,$ino,$mode,$nlink,$uid,$gid) = lstat($_)) &&
-    ((defined $maxdepth && -d _ && @s >= @slashes + $maxdepth) || $File::Find::name =~ /\/\.git\z/s) &&
+    ((defined $maxdepth && -d && @s >= @slashes + $maxdepth) || $File::Find::name =~ /\/\.git\z/s)
+    &&
     ($File::Find::prune = 1)
     ||
 ##    -B _ || push(@dirFileNamesL1, $name); ##Vl. some .htm files are seen as binary..
-    ($nobinary && -B _) || push(@dirFileNamesL1, $File::Find::name . (-d ? '/' : ""));
+    ($nobinary && -B _)
+    ||
+    push(@dirFileNamesL1, $File::Find::name . (-d ? '/' : ""));
+}
+sub wantedGit {
+    return if !($File::Find::name =~ /\/\.git/s);
+    return if $File::Find::name =~ /\/\.git\z/s;
+    (!($File::Find::name =~ /\/\.git\/logs/s))
+    &&
+    ($File::Find::prune = 1)
+    ||
+    push(@dirFileNamesL1, $File::Find::name . (-d ? '/' : ""));
 }
 
 =begin comment1
-
-batwings@VladiLaptopWXP /home/batwings/projects/perl/cmp1
-$ perl -e '1 && 1 && 0 || print "A ajuns aici\n";'
-A ajuns aici
-batwings@VladiLaptopWXP /home/batwings/projects/perl/cmp1
-$ perl -e '1 && 1 && 0 || 1 || print "A ajuns aici\n";
 
 (minimum) width
                 Arguments are usually formatted to be only as wide as required
