@@ -78,7 +78,7 @@ for my $member ($zip->members) {
   my @s = $fn =~ /\//g;
   push (@zipFileNamesL1, $fn)
 ##    unless ($member->isBinaryFile || !($fn =~ /$testpath/) || $fn =~ /\.git/); ##Vl.isBinaryFile is not reliable..
-    unless (!($fn =~ /$testpath/) || ((defined $maxdepth && @s > @slashes + $maxdepth) && !$except) || ($nobinary && $member->isBinaryFile));
+    unless (!($fn =~ /$testpath/) || ((defined $maxdepth && @s > @slashes + $maxdepth) && !$except) || (!$member->isDirectory && $member->isBinaryFile && $nobinary));
 }
 # print "zipFilePreSort:\n@zipFileNamesL1\n" if $verbose2; #Vl.zipmembersList1
 @zipFileNamesL1 = sort  byname @zipFileNamesL1;
@@ -167,7 +167,7 @@ sub wanted {
     ($File::Find::prune = 1)
     ||
 ##    -B _ || push(@dirFileNamesL1, $name); ##Vl. some .htm files are seen as binary..
-    ($nobinary && -B _)
+    (!-d && -B && $nobinary)
     ||
     push(@dirFileNamesL1, $File::Find::name . (-d ? '/' : ""));
 }
