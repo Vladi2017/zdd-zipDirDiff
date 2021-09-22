@@ -64,16 +64,21 @@ File::Find::find(\&wantedGit, $testpath) if $gitF;
 print "\ndirectory:\n@dirFileNamesL1\n" if $verbose2;
 for my $member ($zip->members) {
   my $except = 0;
+  my $tmp1;
   my $fn = $member->fileName;
   next if $fn =~ /\.git/ && !$gitF;
   next if $fn =~ /\.git/ && !($fn =~ /\/\.git\/logs/s);
   $except = 1 if $fn =~ /\.git/;
   if (not $member->isDirectory) { ##Vld.to deal with Windows FileExplorer zipArchive bug..
     $fn =~ /^(.*\/)/; #Vld.capturing greedy
-	if (not $zip->memberNamed($1)) {
-	  $zip->addDirectory($1);
-	  push (@zipFileNamesL1, $1)
-	}
+    $tmp1 = $1 #Vld.$1 is local var now.., undef outside if block..
+  } else {
+    $fn =~ /(.*\/)(?=.*\/)/; #Vld.positive lookahead
+    $tmp1 = $1
+  }
+  if (not $zip->memberNamed($tmp1)) {
+    $zip->addDirectory($tmp1);
+    push (@zipFileNamesL1, $tmp1)
   }
   my @s = $fn =~ /\//g;
   push (@zipFileNamesL1, $fn)
@@ -195,6 +200,10 @@ sub wantedGit {
                  printf "<%2s>", "long";   # prints "<long>" (does not truncate)
                 If a field width obtained through "*" is negative, it has the
                 same effect as the "-" flag: left-justification.
+TODO (Open issues):
+1. link files treatment.
+2. UTF-16 files.., especially for "*!" mark
+3. see external refID eid1 in file://C:\Users\mvman\Documents\MAI_VladiLaptopWXP\MyDocuments\stuff\tmptmp.txt , at least catch the exception..
 
 =end comment1
 
