@@ -76,7 +76,7 @@ for my $member ($zip->members) {
     $fn =~ /(.*\/)(?=.*\/)/; #Vld.positive lookahead
     $tmp1 = $1
   }
-  if (not $zip->memberNamed($tmp1)) {
+  if (defined $tmp1 and not $zip->memberNamed($tmp1)) {
     $zip->addDirectory($tmp1);
     push (@zipFileNamesL1, $tmp1)
   }
