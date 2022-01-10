@@ -66,9 +66,9 @@ for my $member ($zip->members) {
   my $except = 0;
   my $tmp1;
   my $fn = $member->fileName;
-  next if $fn =~ /\.git/ && !$gitF;
-  next if $fn =~ /\.git/ && !($fn =~ /\/\.git\/logs/s);
-  $except = 1 if $fn =~ /\.git/;
+  next if $fn =~ /\.git\// && !$gitF;
+  next if $fn =~ /\.git\// && !($fn =~ /\/\.git\/logs/s);
+  $except = 1 if $fn =~ /\.git\//;
   if (not $member->isDirectory) { ##Vld.to deal with Windows FileExplorer zipArchive bug..
     $fn =~ /^(.*\/)/; #Vld.capturing greedy
     $tmp1 = $1 #Vld.$1 is local var now.., undef outside if block..
@@ -182,6 +182,8 @@ sub wantedGit {
     (!($File::Find::name =~ /\/\.git\/logs/s))
     &&
     ($File::Find::prune = 1)
+    ||
+    (!-d && -B && $nobinary)  #Vld. 0B size files are seen as binaries.., also in $zip
     ||
     push(@dirFileNamesL1, $File::Find::name . (-d ? '/' : ""));
 }

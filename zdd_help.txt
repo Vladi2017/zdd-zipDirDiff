@@ -11,7 +11,7 @@ SYNOPSIS
   zdd [-m k -nb -g -v1 -v2] [--longoption ...] [zipFile.zip] test_dir
 		
 DESCRIPTION
-	This app is useful especially when you write on the same project on different machines and sometimes you need somehow to synchronize your work. zdd compare one zipped folder against his current directory counterpart (test_dir). By default zdd prints founded differences in terms of dir_only files, zip_only files and altered files.
+	This app is useful especially when you write on the same project on different machines and sometimes you need somehow to synchronize your work. zdd compare one zipped folder (zipFile.zip) against his directory counterpart (test_dir). By default zdd prints founded differences in terms of dir_only files, zip_only files and altered files.
 	Both zipFile.zip and test_dir must reside in the same directory. If there is no zipFile.zip parameter in the command line, test_dir is compared against test_dir.zip file. For .git subdirs please see note_2 below. If two files (in the zip archive and test_dir (sub)directory, including relative paths) have same size, computeCRC32 is done to establish similarity.
 	To assist your synchronization process:
       - the most recently altered files are "*" marked.
@@ -20,7 +20,7 @@ DESCRIPTION
 
 Notes:
 note_1. Even though the new version has more lines than the older one.
-note_2. .git treatment: .git subdirs scanning is triggered by -g switch but in this case --maxdepth has no effect for .git position in test_dir / zipFile directory hierarchy. All .git subdirs will be scanned. Furthermore, in order to prevent excessive cluttering, only .git/logs/ subdirs differences will be reported. This should be sufficient in order to evaluate similarities in git archives inside test_dir / zipFile. In this respect to see (mostly) .git subdirs status use "zdd -m 0 -nb -g zipFile.zip test_dir". Otherwise if -g switch is used (without -m 0 -nb) .git logs are interleaved between other "ordinary" files (obviously if there are differences which need to be emphasized).
+note_2. .git treatment: .git subdirs scanning is triggered by -g switch but in this case --maxdepth has no effect for .git position in test_dir / zipFile directory hierarchy. All .git subdirs will be scanned. Furthermore, in order to prevent excessive cluttering, only .git/logs/ subdirs differences will be reported. This should be sufficient in order to evaluate similarities in git archives inside test_dir / zipFile. In this respect to see (mostly) .git subdirs status please use "zdd -m 0 -g zipFile.zip test_dir". Additionally in this mode all the process is faster. Otherwise, if -g switch is used (without -m 0), .git logs are interleaved between other "ordinary" files (obviously if there are differences which need to be emphasized).
 note_3. Please be aware that for -nb switch files such as .docx, .pdf, executable scripts (those with -x mode flag enabled) are treated as binaries and excluded from the report.
 
 OPTIONS
