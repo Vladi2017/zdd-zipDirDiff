@@ -135,15 +135,15 @@ foreach (@common) {
   $flag = "bin" if -B _;
   if (not $flag) {
     $zip->extractMemberWithoutPaths({memberOrZipName => $zipM, name => $tmpfile});
-	my $diff1 = "\n" . ($cmp ? qx(diff $dirM $tmpfile) : qx(diff $tmpfile $dirM));
-	$flag = "!" if $diff1 =~ /\015?\012\d+a/;
-	if (not $flag) {
-	  while ($diff1 =~ /\015?\012(\d+,)?(\d+)c(\d+),?(\d+)?/g) {
-	    my ($one,$four) = ($1,$4);
-		$one = $2 if $1 == 0; $four = $3 if $4 == 0;
-		if ($2 - $one < $four - $3) {$flag = "!"; last}
-	  }
-	}
+    my $diff1 = "\n" . ($cmp ? qx(diff $dirM $tmpfile) : qx(diff $tmpfile $dirM));
+    $flag = "!" if $diff1 =~ /\015?\012\d+a/;
+    if (not $flag) {
+      while ($diff1 =~ /\015?\012(\d+,)?(\d+)c(\d+),?(\d+)?/g) {
+        my ($one,$four) = ($1,$4);
+        $one = $2 if $1 == 0; $four = $3 if $4 == 0;
+        if ($2 - $one < $four - $3) {$flag = "!"; last}
+      }
+    }
   }
   unlink $tmpfile or warn "Could not delete temp file $tmpfile: $!" if -e $tmpfile;
   printf "%-29s%14s       %-29s%14s", scalar(localtime($mtime)) . ($cmp ? "*$flag" : ""), scalar($size),
