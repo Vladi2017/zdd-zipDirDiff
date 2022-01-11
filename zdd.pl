@@ -7,11 +7,12 @@ use File::Find ();
 use Archive::Zip;
 use List::Util qw(first);
 
+use constant MAX1 => 1000;
 my $Usage = "Usage:\n$0 [--long_options] [-short_options] [zipFile.zip] test_path\n  (test_path must not be a file).
 Also see zdd_help.txt\n";
 my $legend1 = "Legend: * = mark the newer file's version; ! = indicate that the older file's version has additional lines; bin = file detected as binary.";
 die $Usage unless (@ARGV and -d $ARGV[$#ARGV]);
-my $maxdepth = 1000;
+my $maxdepth = MAX1;
 undef my $nobinary;
 undef my $verbose1;
 undef my $verbose2; undef my $debug1;
@@ -31,7 +32,7 @@ for(my $i = 0; $i < $#ARGV; $i++) {
   }
 }
 
-undef $maxdepth if ($maxdepth == 1000);
+undef $maxdepth if ($maxdepth == MAX1);
 my $testpath = $ARGV[$#ARGV];
 ($testpath) = ($testpath =~ /(\w.*)$/);
 for ($testpath) {
@@ -62,7 +63,10 @@ File::Find::find({wanted => \&wanted}, $testpath);
 File::Find::find(\&wantedGit, $testpath) if $gitF;
 @dirFileNamesL1 = sort  byname @dirFileNamesL1;
 print "\ndirectory:\n@dirFileNamesL1\n" if $verbose2;
-for my $member ($zip->members) {
+# for my $member ($zip->members) {
+my $depth = $maxdepth + 1;
+$depth = MAX1 if not defined $maxdepth;
+for my $member ($zip->membersMatching('^(?:[^\/]*\/){1,'.$depth.'}(?!.*\/)|\.git\/logs\/')) {
   my $except = 0;
   my $tmp1;
   my $fn = $member->fileName;
