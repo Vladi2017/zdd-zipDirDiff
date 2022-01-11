@@ -66,7 +66,7 @@ print "\ndirectory:\n@dirFileNamesL1\n" if $verbose2;
 # for my $member ($zip->members) {
 my $depth = $maxdepth + 1;
 $depth = MAX1 if not defined $maxdepth;
-for my $member ($zip->membersMatching('^(?:[^\/]*\/){1,'.$depth.'}(?!.*\/)|\.git\/logs\/')) {
+for my $member ($zip->membersMatching('(?!.*\.git\/)^(?:[^\/]*\/){1,'.$depth.'}(?!.*\/)|\.git\/logs\/')) {
   my $except = 0;
   my $tmp1;
   my $fn = $member->fileName;
