@@ -40,7 +40,7 @@ for ($testpath) {
   $testpath = $_ when /\/$/;
   default {$testpath = $_ . "/";}
 }
-$testpath =~ /^(\w+)/;
+$testpath =~ /^([\s\w]+)/;
 $zipfile = $1 . ".zip" unless $zipfile;
 my $zip = Archive::Zip->new( $zipfile )
     or die "Archive::Zip was unable to read $zipfile\n"

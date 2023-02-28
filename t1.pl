@@ -57,3 +57,22 @@ print "@list1\n";
 my @list2 = sort byalphabetic @list1;
 print "@list2\n";
 =cut
+
+use v5.14;  #21:18 2/26/2023
+my $zipfile;
+my $testpath = $ARGV[$#ARGV];
+print "1. $testpath\n";
+($testpath) = ($testpath =~ /(\w.*)$/); #{dst0000.: Trying to understand why I wrote my:.\zdd.pl#37 , 01:17 2/28/2023}
+print "2. $testpath\n";
+for ($testpath) {
+  no warnings 'experimental';
+  $testpath = $_ when /\/$/;
+  default {$testpath = $_ . "/";}
+}
+print "3. $testpath\n";
+$testpath =~ /^([\s\w]+)/;  #{to support (.zip) file names with blanks, 01:34 2/28/2023}
+$zipfile = $1 . ".zip" unless $zipfile;
+print "$zipfile\n";
+=test4 DESCRIPTION
+vladi@VladiLaptop1W10 ~/projects/perl/cmp1$ ./t1.pl "arg1 arg2"
+=cut
