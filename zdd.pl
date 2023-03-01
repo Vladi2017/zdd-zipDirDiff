@@ -135,7 +135,7 @@ foreach (@common) {
   $flag = "bin" if -B _;
   if (not $flag) {
     $zip->extractMemberWithoutPaths({memberOrZipName => $zipM, name => $tmpfile});
-    my $diff1 = "\n" . ($cmp ? qx(diff $dirM $tmpfile) : qx(diff $tmpfile $dirM));
+    my $diff1 = "\n" . ($cmp ? qx(diff "$dirM" $tmpfile) : qx(diff $tmpfile "$dirM"));
     $flag = "!" if $diff1 =~ /\015?\012\d+a/;
     if (not $flag) {
       while ($diff1 =~ /\015?\012(\d+,)?(\d+)c(\d+),?(\d+)?/g) {
