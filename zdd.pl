@@ -94,12 +94,13 @@ for my $member ($zip->membersMatching('(?!.*\.git\/)^(?:[^\/]*\/){1,'.$depth.'}(
 print "zipFile:\n@zipFileNamesL1\n" if $verbose2; #Vl.zipmembersList1
 no warnings 'experimental';
 foreach (@dirFileNamesL1) {
-  if ($_ ~~ @zipFileNamesL1) { #Vl.Smartmatch is experimental, https://perldoc.perl.org/5.32.1/perlop#Smartmatch-Operator
-    my $common = $_;
+  my $elem = $_;
+  if (grep {$elem eq $_} @zipFileNamesL1) { #Vl.Smartmatch is experimental, https://perldoc.perl.org/5.32.1/perlop#Smartmatch-Operator
+    my $common = $elem;
     push @common, $common;
-    my $offset = first {$zipFileNamesL1[$_] eq $common} 0..$#zipFileNamesL1;
+    my $offset = first {$zipFileNamesL1[$elem] eq $common} 0..$#zipFileNamesL1;
     splice @zipFileNamesL1, $offset, 1;
-  } else { push @dir_only, $_ }
+  } else { push @dir_only, $elem }
 }
 @zip_only = @zipFileNamesL1;
 print "\ndir_only:\n" . ($debug1 ? "@dir_only\n" : "");
