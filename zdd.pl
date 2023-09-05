@@ -98,7 +98,7 @@ foreach (@dirFileNamesL1) {
   if (grep {$elem eq $_} @zipFileNamesL1) { #Vl.Smartmatch is experimental, https://perldoc.perl.org/5.32.1/perlop#Smartmatch-Operator
     my $common = $elem;
     push @common, $common;
-    my $offset = first {$zipFileNamesL1[$elem] eq $common} 0..$#zipFileNamesL1;
+    my $offset = first {$zipFileNamesL1[$_] eq $common} 0..$#zipFileNamesL1;  #here $_ is set by first function in the range 0..$#zipFileNamesL1
     splice @zipFileNamesL1, $offset, 1;
   } else { push @dir_only, $elem }
 }
