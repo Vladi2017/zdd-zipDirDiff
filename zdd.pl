@@ -15,7 +15,7 @@ die $Usage unless (@ARGV and -d $ARGV[$#ARGV]);
 my $maxdepth = MAX1;
 undef my $nobinary;
 undef my $verbose1;
-undef my $verbose2; undef my $debug1;
+undef my $verbose2; undef my $debug1; undef my $debug2;
 undef my $zipfile;
 undef my $gitF;
 use v5.14;
@@ -27,6 +27,7 @@ for(my $i = 0; $i < $#ARGV; $i++) {
     $verbose1 = 1 when /^--verbose1$/ || /^-v1$/;
     $verbose2 = 1 when /^--verbose2$/ || /^-v2$/;
     $debug1 = 1 when /^--debug1$/ || /^-d1$/;
+    $debug2 = 1 when /^--debug2$/ || /^-d2$/;
     $gitF = 1 when /^--git$/ || /^-g$/;
     $zipfile = $_ when /\.zip$/;
   }
@@ -84,6 +85,7 @@ for my $member ($zip->membersMatching('(?!.*\.git\/)^(?:[^\/]*\/){1,'.$depth.'}(
     $zip->addDirectory($tmp1);
     push (@zipFileNamesL1, $tmp1)
   }
+  say $fn . ", charsLength: " . (length $fn) . ", is_utf8: " . (utf8::is_utf8($fn) ? "true" : "false") if ($debug2);
   my @s = $fn =~ /\//g;
   push (@zipFileNamesL1, $fn)
 ##    unless ($member->isBinaryFile || !($fn =~ /$testpath/) || $fn =~ /\.git/); ##Vl.isBinaryFile is not reliable..
@@ -92,9 +94,12 @@ for my $member ($zip->membersMatching('(?!.*\.git\/)^(?:[^\/]*\/){1,'.$depth.'}(
 # print "zipFilePreSort:\n@zipFileNamesL1\n" if $verbose2; #Vl.zipmembersList1
 @zipFileNamesL1 = sort  byname @zipFileNamesL1;
 print "zipFile:\n@zipFileNamesL1\n" if $verbose2; #Vl.zipmembersList1
-no warnings 'experimental';
+say "\ndirFileNamesL1:" if ($debug2);
 foreach (@dirFileNamesL1) {
   my $elem = $_;
+  if ($debug2) {
+    say $elem . ", charsLength: " . (length $elem) . ", is_utf8: " . (utf8::is_utf8($elem) ? "true" : "false")
+  }
   if (grep {$elem eq $_} @zipFileNamesL1) { #Vl.Smartmatch is experimental, https://perldoc.perl.org/5.32.1/perlop#Smartmatch-Operator
     my $common = $elem;
     push @common, $common;

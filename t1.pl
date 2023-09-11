@@ -58,6 +58,7 @@ my @list2 = sort byalphabetic @list1;
 print "@list2\n";
 =cut
 
+=test5 DESCRIPTION
 use v5.14;  #21:18 2/26/2023
 my $zipfile;
 my $testpath = $ARGV[$#ARGV];
@@ -73,6 +74,22 @@ print "3. $testpath\n";
 $testpath =~ /^([\s\w]+)/;  #{to support (.zip) file names with blanks, 01:34 2/28/2023}
 $zipfile = $1 . ".zip" unless $zipfile;
 print "$zipfile\n";
+vladi@VladiLaptop1W10 ~/projects/perl/cmp1$ ./t1.pl "arg1 arg2"
+=cut
+
 =test4 DESCRIPTION
 vladi@VladiLaptop1W10 ~/projects/perl/cmp1$ ./t1.pl "arg1 arg2"
 =cut
+
+use v5.14;  #22:35 Saturday, September 9, 2023
+my @zip_only = ('tmp1/TradingView Chart \x{2014} TradingView.mhtml', 'tmp1/V2tmp1, \x{021A}¦r\x{0103}.pl', 'tmp1/fi\x{0219}ier \x{0103}¦\x{021B}¦., f1_all2.txt', 'tmp1/fost f1_\x{0219}\x{0103},sa¦a\x{0219}s\x{021B} B¦rc\x{0103}', 'tmp1/logs/Corpul numerelor complexe. \x{0218}iruri \x{0219}i serii de numere complexe-Curs + Seminar 1.pdf', 'tmp1/logs/a fost tmp1 \x{0219}i acum ¦\x{021B}\x{0219}\x{0103}¦ diacrit,, \x{0219}i virgul\x{0103}', 'tmp1/logs/fost V2.exe dd¦a\x{0219}¦d.exe');
+foreach (@zip_only) { say $_ }
+say;
+# foreach (@zip_only) { $_ = eval qq/"$_"/ }  #see ref1.
+my $tmp;
+foreach (@zip_only) {
+  $tmp = eval qq/"$_"/;
+  $_ = sprintf("%s", $tmp)
+}
+foreach (@zip_only) { say $_ }
+# ref1.: there we only interpolate $_ between double quotes.. We'll still have hex chars (like \x{0103}). See https://perldoc.perl.org/5.32.1/perlop#%5B1%5D, 02:55 9/10/2023.
