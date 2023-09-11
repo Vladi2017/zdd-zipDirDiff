@@ -100,6 +100,7 @@ foreach (@dirFileNamesL1) {
   if ($debug2) {
     say $elem . ", charsLength: " . (length $elem) . ", is_utf8: " . (utf8::is_utf8($elem) ? "true" : "false")
   }
+  utf8::decode($elem); # convert in-place, https://perldoc.perl.org/5.32.1/utf8#Utility-functions
   if (grep {$elem eq $_} @zipFileNamesL1) { #Vl.Smartmatch is experimental, https://perldoc.perl.org/5.32.1/perlop#Smartmatch-Operator
     my $common = $elem;
     push @common, $common;
