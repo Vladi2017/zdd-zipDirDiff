@@ -204,5 +204,7 @@ Switches (OPTIONS) are in nmap-style (e.g. "$zdd -nbm 2 dir" will not work). Ple
         vladi@VladiLaptop1W10 ~/projects/perl$
 	        Where we observe that there are differences in the Git repo(s).
 ```
+### Updates
+  1. 21:37 9/12/2023: Perhaps now we have support for UTF-8 file names. Note: it seems FileExplorer/W10 zip feature can not manage UTF-8 file names.. I made the (test) archive with UTF-8 file names using zip/Cygwin..
 ### AUTHORS
   Vladimir Manolescu, Bucharest, Romania, 2022, mvmanol@yahoo.com
