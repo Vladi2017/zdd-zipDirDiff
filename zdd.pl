@@ -43,7 +43,7 @@ for ($testpath) {
   $testpath = $_ when /\/$/;
   default {$testpath = $_ . "/";}
 }
-$testpath =~ /^([\s\w-.]+)/;
+$testpath =~ /^([\s\w\W]+)\/$/; # always $testpath ends in /
 $zipfile = $1 . ".zip" unless $zipfile;
 my $zip = Archive::Zip->new( $zipfile )
     or die "Archive::Zip was unable to read $zipfile\n"
@@ -69,6 +69,7 @@ print "\ndirectory:\n@dirFileNamesL1\n" if $verbose2;
 # for my $member ($zip->members) {
 my $depth = $maxdepth + 1;
 $depth = MAX1 if not defined $maxdepth;
+my $mtp = quotemeta $testpath; # escape metachars.
 for my $member ($zip->membersMatching('(?!.*\.git\/)^(?:[^\/]*\/){0,'.$depth.'}(?!.*\/)|\.git\/logs\/')) {
   my $except = 0;
   my $tmp1;
@@ -91,7 +92,7 @@ for my $member ($zip->membersMatching('(?!.*\.git\/)^(?:[^\/]*\/){0,'.$depth.'}(
   my @s = $fn =~ /\//g;
   push (@zipFileNamesL1, $fn)
 ##    unless ($member->isBinaryFile || !($fn =~ /$testpath/) || $fn =~ /\.git/); ##Vl.isBinaryFile is not reliable..
-    unless ((!$itpnF and $fn !~ /$testpath/) || ((defined $maxdepth && @s > @slashes + $maxdepth) && !$except) || (!$member->isDirectory && $member->isBinaryFile && $nobinary));
+    unless ((!$itpnF and $fn !~ /$mtp/) || ((defined $maxdepth && @s > @slashes + $maxdepth) && !$except) || (!$member->isDirectory && $member->isBinaryFile && $nobinary));
 }
 # print "zipFilePreSort:\n@zipFileNamesL1\n" if $verbose2; #Vl.zipmembersList1
 @zipFileNamesL1 = sort  byname @zipFileNamesL1;
