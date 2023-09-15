@@ -18,6 +18,7 @@ undef my $verbose1;
 undef my $verbose2; undef my $debug1; undef my $debug2;
 undef my $zipfile;
 undef my $gitF;
+undef my $itpnF; # ignore_test_path_name flag, avoid collusion with dirname(1) command (future proof).
 use v5.14;
 for(my $i = 0; $i < $#ARGV; $i++) {
   no warnings 'experimental';
@@ -29,6 +30,7 @@ for(my $i = 0; $i < $#ARGV; $i++) {
     $debug1 = 1 when /^--debug1$/ || /^-d1$/;
     $debug2 = 1 when /^--debug2$/ || /^-d2$/;
     $gitF = 1 when /^--git$/ || /^-g$/;
+    $itpnF = 1 when /^--ignoreDirName/ || /^-idn/;  # switch (name) could be misleading for user.
     $zipfile = $_ when /\.zip$/;
   }
 }
@@ -67,7 +69,7 @@ print "\ndirectory:\n@dirFileNamesL1\n" if $verbose2;
 # for my $member ($zip->members) {
 my $depth = $maxdepth + 1;
 $depth = MAX1 if not defined $maxdepth;
-for my $member ($zip->membersMatching('(?!.*\.git\/)^(?:[^\/]*\/){1,'.$depth.'}(?!.*\/)|\.git\/logs\/')) {
+for my $member ($zip->membersMatching('(?!.*\.git\/)^(?:[^\/]*\/){0,'.$depth.'}(?!.*\/)|\.git\/logs\/')) {
   my $except = 0;
   my $tmp1;
   my $fn = $member->fileName;
@@ -89,10 +91,11 @@ for my $member ($zip->membersMatching('(?!.*\.git\/)^(?:[^\/]*\/){1,'.$depth.'}(
   my @s = $fn =~ /\//g;
   push (@zipFileNamesL1, $fn)
 ##    unless ($member->isBinaryFile || !($fn =~ /$testpath/) || $fn =~ /\.git/); ##Vl.isBinaryFile is not reliable..
-    unless (!($fn =~ /$testpath/) || ((defined $maxdepth && @s > @slashes + $maxdepth) && !$except) || (!$member->isDirectory && $member->isBinaryFile && $nobinary));
+    unless ((!$itpnF and $fn !~ /$testpath/) || ((defined $maxdepth && @s > @slashes + $maxdepth) && !$except) || (!$member->isDirectory && $member->isBinaryFile && $nobinary));
 }
 # print "zipFilePreSort:\n@zipFileNamesL1\n" if $verbose2; #Vl.zipmembersList1
 @zipFileNamesL1 = sort  byname @zipFileNamesL1;
+shift @dirFileNamesL1 if ($itpnF); # to avoid print a blank line.
 print "zipFile:\n@zipFileNamesL1\n" if $verbose2; #Vl.zipmembersList1
 say "\ndirFileNamesL1:" if ($debug2);
 foreach (@dirFileNamesL1) {
@@ -101,6 +104,7 @@ foreach (@dirFileNamesL1) {
     say $elem . ", charsLength: " . (length $elem) . ", is_utf8: " . (utf8::is_utf8($elem) ? "true" : "false")
   }
   utf8::decode($elem); # convert in-place, https://perldoc.perl.org/5.32.1/utf8#Utility-functions
+  $elem =~ s/^$testpath// if ($itpnF);
   if (grep {$elem eq $_} @zipFileNamesL1) { #Vl.Smartmatch is experimental, https://perldoc.perl.org/5.32.1/perlop#Smartmatch-Operator
     my $common = $elem;
     push @common, $common;
@@ -112,7 +116,7 @@ foreach (@dirFileNamesL1) {
 print "\ndir_only:\n" . ($debug1 ? "@dir_only\n" : "");
 my $cDir = "////"; #Vld.currentDir
 foreach (@dir_only) {
-  if (-d and not /$cDir/) { say $_; $cDir = $_; next }
+  if (-d $itpnF ? $testpath.$_ : $_ and not /$cDir/) { say $_; $cDir = $_; next }
   say $_ unless (/$cDir/ or not $cDir = "////")
 }
 print "\nzip_only:\n" . ($debug1 ? "@zip_only\n" : "");
@@ -128,7 +132,7 @@ my $cmp;
 foreach (@common) {
   next if -d;
   my $zipM = $zip->memberNamed($_); #Vl. zipM==zipMember
-  my $dirM = $_;
+  my $dirM = $itpnF ? $testpath.$_ : $_;
   my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,$atime,$mtime,$ctime) = lstat($dirM);
   if (-s _ == $zipM->uncompressedSize) { ##Vld.file test (perlfunc) the special filehandle "_"
     open(my $fileHandler, '<', $dirM) or die "Can't open $dirM: $!\n";

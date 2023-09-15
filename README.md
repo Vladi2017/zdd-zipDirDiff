@@ -5,12 +5,12 @@ zdd is a Perl CLI utility which compares one zipped folder (zippedDir.zip) again
   zdd - ZipDirDiff.., compare zippedDir.zip	archive against dir (sub)directory.
   
 ### SYNOPSIS
-  zdd [-m k -nb -g -v1 -v2] [--longoption ...] [zippedDir.zip] dir
+  zdd [-m k -nb -g -idn -v1 -v2] [--longoption ...] [zippedDir.zip] dir
   
 ### DESCRIPTION
 This app is useful especially when you write on the same project on different machines and sometimes you need somehow to synchronize your work. zdd compare one zipped folder (zippedDir.zip) against his directory counterpart (dir). By default zdd prints founded differences in terms of dir_only files, zip_only files and altered files (also please see note_6).
 
-Both zippedDir.zip and dir must reside in the same directory. If there is no zippedDir.zip parameter in the command line, dir is compared against dir.zip file. For .git subdirs please see note_2 below. If two files (in the zip archive and dir (sub)directory, including relative paths) have same size, computeCRC32 is done to establish similarity.
+Both zippedDir.zip and dir must reside in the working directory. If there is no zippedDir.zip parameter in the command line, dir is compared against dir.zip file. For .git subdirs please see note_2 below. If two files (in the zip archive and dir (sub)directory, including relative paths) have same size, computeCRC32 is done to establish similarity.
 
 To assist your synchronization process:
   - the most recently altered files are "\*" marked.      
@@ -31,6 +31,8 @@ Switches (OPTIONS) are in nmap-style (e.g. "$zdd -nbm 2 dir" will not work). Ple
   
   note_6: Even if two text files have different mtime (modification time) those are not reported if they are identical. This could be useful since git checkout / restore does not have (file) timestamp tracking.
   
+  note_7: For now, for things to work zippedDir.zip and dir must be both in the current working directory.
+  
 ### OPTIONS
 -m k, --maxdepth k
 	Comparison depth into dir (sub)directory hierarchy, k>=0, natural number. If k=0 no dir subdirs are searched.
@@ -40,6 +42,14 @@ Switches (OPTIONS) are in nmap-style (e.g. "$zdd -nbm 2 dir" will not work). Ple
   
 -g, --git
   Also scan .git/ subdirectories.
+
+-idn, --ignoreDirName
+  A command line like "zdd file.zip dir_k" will scan ONLY file.zip/dir_k (recursively). With -idn switch all file.zip archive will be scanned and compared with dir_k ("chrooted") content. To be more specific, given the foo directory and under it is our dir_k directory:
+  a. DO NOT use -idn switch when dir_k was zipped as an entire directory like:
+        foo$ zip -r dir_k[.zip] dir_k   # here the resulted dir_k.zip archive will have dir_k in its path names (internal) structure.
+  b. use -idn switch when zip archive was made from inside dir_k directory, eg:
+        foo/dir_k$ zip -R dir_k[.zip] ".*" "*"  # here dir_k do not leading any path name.
+  Caveat: The zdd command outcome is critically depended on this switch. If you are unsure please verify first zip file names structure (eg. using "unzip -l foo" or with any zip frontend). If there are any dir_k inside choose a. otherwise b.
   
 -v1, --verbose1
 	Also prints the common_list of files.
@@ -205,6 +215,7 @@ Switches (OPTIONS) are in nmap-style (e.g. "$zdd -nbm 2 dir" will not work). Ple
 	        Where we observe that there are differences in the Git repo(s).
 ```
 ### Updates
-  1. 21:37 9/12/2023: Perhaps now we have support for UTF-8 file names. Note: it seems FileExplorer/W10 zip feature can not manage UTF-8 file names.. I made the (test) archive with UTF-8 file names using zip/Cygwin..
+      2. 21:19 9/14/2023: Introduced --ignoreDirName, -idn switch.
+      1. 21:37 9/12/2023: Perhaps now we have support for UTF-8 file names. Note: it seems FileExplorer/W10 zip feature can not manage UTF-8 file names.. I made the (test) archive with UTF-8 file names using zip/Cygwin..
 ### AUTHORS
   Vladimir Manolescu, Bucharest, Romania, 2022, mvmanol@yahoo.com
