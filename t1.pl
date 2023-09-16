@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
+use v5.14;
 
 =test1
 # while ("\n" ne <STDIN>) { # is not valid for $_ assigment
@@ -63,7 +64,7 @@ use v5.14;  #21:18 2/26/2023
 my $zipfile;
 my $testpath = $ARGV[$#ARGV];
 print "1. $testpath\n";
-($testpath) = ($testpath =~ /(\w.*)$/); #{dst0000.: Trying to understand why I wrote my:.\zdd.pl#37 , 01:17 2/28/2023}
+($testpath) = ($testpath =~ /(\w.*)$/); #{dst0000.: Trying to understand why I wrote my:.\zdd.pl#37 , 01:17 2/28/2023;; see note1.;;}
 print "2. $testpath\n";
 for ($testpath) {
   no warnings 'experimental';
@@ -75,13 +76,15 @@ $testpath =~ /^([\s\w]+)/;  #{to support (.zip) file names with blanks, 01:34 2/
 $zipfile = $1 . ".zip" unless $zipfile;
 print "$zipfile\n";
 vladi@VladiLaptop1W10 ~/projects/perl/cmp1$ ./t1.pl "arg1 arg2"
+# note1.: Now is not at line 37 anymore. As it dst0000 experession, the matching result $1 is assigned (again) to $testpath., 12:52 9/16/2023;;
 =cut
 
 =test4 DESCRIPTION
 vladi@VladiLaptop1W10 ~/projects/perl/cmp1$ ./t1.pl "arg1 arg2"
 =cut
 
-use v5.14;  #22:35 Saturday, September 9, 2023
+=test6
+#22:35 Saturday, September 9, 2023
 my @zip_only = ('tmp1/TradingView Chart \x{2014} TradingView.mhtml', 'tmp1/V2tmp1, \x{021A}¦r\x{0103}.pl', 'tmp1/fi\x{0219}ier \x{0103}¦\x{021B}¦., f1_all2.txt', 'tmp1/fost f1_\x{0219}\x{0103},sa¦a\x{0219}s\x{021B} B¦rc\x{0103}', 'tmp1/logs/Corpul numerelor complexe. \x{0218}iruri \x{0219}i serii de numere complexe-Curs + Seminar 1.pdf', 'tmp1/logs/a fost tmp1 \x{0219}i acum ¦\x{021B}\x{0219}\x{0103}¦ diacrit,, \x{0219}i virgul\x{0103}', 'tmp1/logs/fost V2.exe dd¦a\x{0219}¦d.exe');
 foreach (@zip_only) { say $_ }
 say;
@@ -93,3 +96,15 @@ foreach (@zip_only) {
 }
 foreach (@zip_only) { say $_ }
 # ref1.: there we only interpolate $_ between double quotes.. We'll still have hex chars (like \x{0103}). See https://perldoc.perl.org/5.32.1/perlop#%5B1%5D, 02:55 9/10/2023.
+=cut
+
+# test7 DESCRIPTION: error handling, exceptions handling, tag.dst0001, 21:27 Saturday, September 16, 2023:
+local $SIG{__WARN__} = \&hwarn;
+my $var = shift;
+# eval { scalar $var == 0 };  # compile warning displayed also at run-time: "Useless use of numeric eq (==) in void context at ./t1.pl line 104."
+eval { say "argument is: ", $var == 0 ? "zero" : "other number" };
+if (my $err = $@) { say "Warning turned into exception is: " . $err }
+else { say "No exception." }
+sub hwarn { # warnings handler
+  die "hwarn sub said: ".$_[0] if $_[0] =~ "numeric"  # raises an exception., https://perldoc.perl.org/5.32.1/functions/die
+}

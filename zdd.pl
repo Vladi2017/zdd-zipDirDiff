@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 ##Vld. zdd = ZipDirDiff
 use strict;
-# use warnings;
+use warnings;
 no warnings 'redefine';
 use File::Find ();
 use Archive::Zip;
@@ -19,6 +19,7 @@ undef my $verbose2; undef my $debug1; undef my $debug2;
 undef my $zipfile;
 undef my $gitF;
 undef my $itpnF; # ignore_test_path_name flag, avoid collusion with dirname(1) command (future proof).
+my $eci;
 use v5.14;
 for(my $i = 0; $i < $#ARGV; $i++) {
   no warnings 'experimental';
@@ -31,10 +32,15 @@ for(my $i = 0; $i < $#ARGV; $i++) {
     $debug2 = 1 when /^--debug2$/ || /^-d2$/;
     $gitF = 1 when /^--git$/ || /^-g$/;
     $itpnF = 1 when /^--ignoreDirName/ || /^-idn/;  # switch (name) could be misleading for user.
+    $eci = $ARGV[++$i] when /^--exitCodeOnIdentity/ || /^-eci/;
     $zipfile = $_ when /\.zip$/;
   }
 }
-
+eval {
+  local $SIG{__WARN__} = sub { die "--exitCodeOnIdentity must be numeric 0 or 1. Stopped" if $_[0] =~ "numeric" };  # https://perldoc.perl.org/5.32.1/perlvar#%25SIG
+  die "--exitCodeOnIdentity must be 0 or 1. Stopped" if defined $eci and not ($eci == 0 or $eci == 1);
+};
+if (my $ev_err = $@) { say "zdd: ", $ev_err; exit 254 }
 undef $maxdepth if ($maxdepth == MAX1);
 my $testpath = $ARGV[$#ARGV];
 ($testpath) = ($testpath =~ /(\w.*)$/);
@@ -67,7 +73,7 @@ File::Find::find(\&wantedGit, $testpath) if $gitF;
 @dirFileNamesL1 = sort  byname @dirFileNamesL1;
 print "\ndirectory:\n@dirFileNamesL1\n" if $verbose2;
 # for my $member ($zip->members) {
-my $depth = $maxdepth + 1;
+my $depth = $maxdepth + 1 if defined $maxdepth;
 $depth = MAX1 if not defined $maxdepth;
 my $mtp = quotemeta $testpath; # escape metachars.
 for my $member ($zip->membersMatching('(?!.*\.git\/)^(?:[^\/]*\/){0,'.$depth.'}(?!.*\/)|\.git\/logs\/')) {
@@ -117,6 +123,7 @@ foreach (@dirFileNamesL1) {
 print "\ndir_only:\n" . ($debug1 ? "@dir_only\n" : "");
 my $cDir = "////"; #Vld.currentDir
 foreach (@dir_only) {
+no warnings 'uninitialized';
   if (-d $itpnF ? $testpath.$_ : $_ and not /$cDir/) { say $_; $cDir = $_; next }
   say $_ unless (/$cDir/ or not $cDir = "////")
 }
@@ -130,6 +137,8 @@ print "common_list:\n@common\n" if $verbose1 || $verbose2;
 print "\nAltered files.\n"; printf("%-50s","mtime/size[B] for dir:"); printf("%-50s","mtime/size[B] for zipFile:"); print("FileName:\n");
 my $tmpfile = "ttmpf".int(rand(100));
 my $cmp;
+{
+local $SIG{__WARN__} = sub {};  # https://perldoc.perl.org/5.32.1/perlvar#%25SIG, also see my:#@ref1_ .
 foreach (@common) {
   next if -d;
   my $zipM = $zip->memberNamed($_); #Vl. zipM==zipMember
@@ -163,6 +172,9 @@ foreach (@common) {
   ## print "size[B], dirFile: " . scalar(-s _) . "    zipFile: " . scalar($zipM->uncompressedSize) . "\n";
 }
 say defined $cmp ? $legend1 : "Common files are identical. OK!";
+(defined $eci and !@dir_only and !@zip_only and not defined $cmp) ? exit $eci : exit $eci - 1;
+# my:#@ref1_ : "Because local is a run-time operator, it gets executed each time through a loop. Consequently, it's more efficient to localize your variables outside the loop.", https://perldoc.perl.org/5.32.1/perlsub#Temporary-Values-via-local()
+}
 exit;
 
 sub byname {
