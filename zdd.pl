@@ -20,7 +20,7 @@ undef my $zipfile;
 undef my $gitF;
 undef my $itpnF; # ignore_test_path_name flag, avoid collusion with dirname(1) command (future proof).
 my $eci;
-my @ignores;
+my @ignoresDir; my @ignoresZip;
 use v5.14;
 for(my $i = 0; $i < $#ARGV; $i++) {
   no warnings 'experimental';
@@ -34,8 +34,10 @@ for(my $i = 0; $i < $#ARGV; $i++) {
     $gitF = 1 when /^--git$/ || /^-g$/;
     $itpnF = 1 when /^--ignoreDirName/ || /^-idn/;  # switch (name) could be misleading for user.
     $eci = $ARGV[++$i] when /^--exitCodeOnIdentity/ || /^-eci/;
-    push (@ignores, $ARGV[++$i]) when /^--ignore/ || /^-i/;
     $zipfile = $_ when /\.zip$/;
+    push (@ignoresDir, $ARGV[++$i]) when /^--ignoreDir/ || /^-id/;
+    push (@ignoresZip, $ARGV[++$i]) when /^--ignoreZip/ || /^-iz/;
+    when (/^--ignore$/ || /^-i$/) { push(@ignoresDir, $ARGV[++$i]); push(@ignoresZip, $ARGV[$i]) }
   }
 }
 eval {
@@ -197,12 +199,12 @@ sub wanted {
     # Vld.don't use "-d $File::Find::name" since the check is relative to $File::Find::dir..
     # Just use "-d".., see tag zdd1 in my:..\..\..\..\..\..\Users\mvman\VladiDocuments\MAI_VladiLaptopWXP\MyDocuments\stuff\Daily_workVladiLaptopWXP1\perl1\Perl1.txt#@zdd1
     my @s = $File::Find::name =~ /\//g;
-    ((defined $maxdepth && -d && @s >= @slashes + $maxdepth) || ($File::Find::name =~ /\/\.git\z/s) || (grep({$File::Find::name =~ /$_/} @ignores) && -d))
+    ((defined $maxdepth && -d && @s >= @slashes + $maxdepth) || ($File::Find::name =~ /\/\.git\z/s) || (grep({$File::Find::name =~ /$_/} @ignoresDir) && -d))
     &&
     ($File::Find::prune = 1)
     ||
 ##    -B _ || push(@dirFileNamesL1, $name); ##Vl. some .htm files are seen as binary..
-    (grep {$File::Find::name =~ /$_/} @ignores)	# ignore file(s) case.
+    (grep {$File::Find::name =~ /$_/} @ignoresDir)	# ignore file(s) case.
     ||
     (!-d && -B && $nobinary)
     ||
