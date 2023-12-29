@@ -34,12 +34,14 @@ Switches (OPTIONS) are in nmap-style (e.g. "$zdd -nbm 2 dir" will not work). Ple
   note_7: For now, for things to work zippedDir.zip and dir must be both in the current working directory.
   
 ### OPTIONS
--m k, --maxdepth k
-	Comparison depth into dir (sub)directory hierarchy, k>=0, natural number. If k=0 no dir subdirs are searched.
-  
--nb, --nobinary
-	Ignore binaries. Also please see note_3.
-  
+-eci, --exitCodeOnIdentity
+  This option controls exit code when zippedDir.zip and dir, based on scanned scope, have identical files (irrespective of their timestamp though!). In case it is used -eci value must be 0 or 1 and will be returned if (and only if) there is identity. If -eci option is not used then zdd exit code has normal interpretation which indicates success or failure (eg. 0 means EXIT_SUCCESS). This permits insering of zdd in a shell commands list as required in a convenient way, eg.:
+      $ cmd1 && zdd -eci 0 dir && cmd3  # cmd3 executes only when there is identity between dir.zip and dir.
+      $ zdd -eci 0 dir || cmd2  # cmd2 executes only when there are differences between dir.zip and dir.
+  So, to conclude, when -eci is used, zdd:
+      - returns -eci line command value on success AND identity.
+      - returns -eci - 1 (which could be 0 or 1 or 255) on success AND differences.
+
 -g, --git
   Also scan .git/ subdirectories.
 
@@ -50,15 +52,13 @@ Switches (OPTIONS) are in nmap-style (e.g. "$zdd -nbm 2 dir" will not work). Ple
   b. use -idn switch when zip archive was made from inside dir_k directory, eg:
         foo/dir_k$ zip -R dir_k[.zip] ".*" "*"  # here dir_k do not leading any path name in resulted zip archive.
   Caveat: The zdd command outcome is critically depended on this switch. If you are unsure please verify first zip file names structure (eg. using "unzip -l foo" or with any zip frontend). If there are any dir_k inside choose a. otherwise b. For more details please see "man zip", especially -r and -R switches.
-
--eci, --exitCodeOnIdentity
-  This option controls exit code when zippedDir.zip and dir, based on scanned scope, have identical files (irrespective of their timestamp though!). In case it is used -eci value must be 0 or 1 and will be returned if (and only if) there is identity. If -eci option is not used then zdd exit code has normal interpretation which indicates success or failure (eg. 0 means EXIT_SUCCESS). This permits insering of zdd in a shell commands list as required in a convenient way, eg.:
-      $ cmd1 && zdd -eci 0 dir && cmd3  # cmd3 executes only when there is identity between dir.zip and dir.
-      $ zdd -eci 0 dir || cmd2  # cmd2 executes only when there are differences between dir.zip and dir.
-  So, to conclude, when -eci is used, zdd:
-      - returns -eci line command value on success AND identity.
-      - returns -eci - 1 (which could be 0 or 1 or 255) on success AND differences.
   
+-m k, --maxdepth k
+	Comparison depth into dir (sub)directory hierarchy, k>=0, natural number. If k=0 no dir subdirs are searched.
+
+-nb, --nobinary
+	Ignore binaries. Also please see note_3.
+
 -v1, --verbose1
 	Also prints the common_list of files.
   
