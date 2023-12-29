@@ -86,6 +86,7 @@ for my $member ($zip->membersMatching('(?!.*\.git\/)^(?:[^\/]*\/){0,'.$depth.'}(
   my $fn = $member->fileName;
   next if $fn =~ /\.git\// && !$gitF;
   next if $fn =~ /\.git\// && !($fn =~ /\/\.git\/logs/s);
+  next if grep {$fn =~ /$_/} @ignoresZip;
   $except = 1 if $fn =~ /\.git\//;
   if (not $member->isDirectory) { ##Vld.to deal with Windows FileExplorer zipArchive bug..
     $fn =~ /^(.*\/)/; #Vld.capturing greedy
