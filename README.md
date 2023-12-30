@@ -5,7 +5,7 @@ zdd is a Perl CLI utility which compares one zipped folder (zippedDir.zip) again
   zdd - ZipDirDiff.., compare zippedDir.zip	archive against dir (sub)directory.
   
 ### SYNOPSIS
-  zdd [-m k -nb -g -idn -v1 -v2] [--longoption ...] [zippedDir.zip] dir
+  zdd [-m k -nb -g -idn -i[d|z] regex -v1 -v2] [--longoption ...] [zippedDir.zip] dir
   
 ### DESCRIPTION
 This app is useful especially when you write on the same project on different machines and sometimes you need somehow to synchronize your work. zdd compare one zipped folder (zippedDir.zip) against his directory counterpart (dir). By default zdd prints founded differences in terms of dir_only files, zip_only files and altered files (also please see note_6).
@@ -44,6 +44,121 @@ Switches (OPTIONS) are in nmap-style (e.g. "$zdd -nbm 2 dir" will not work). Ple
 
 -g, --git
   Also scan .git/ subdirectories.
+
+-i, --ignore filename_regex
+-id, --ignoreDir filename_regex
+-iz, --ignoreZip filename_regex
+  -i exclude dirs/files scanning from both dir (file system) and zipFile; -id exclude dirs/files scanning from dir only; -iz exclude dirs/files scanning from zip only.
+  In this regard zdd performs "just" regex matching filtering over filenames list(s). The regex expression is searched in each filename (including dirnames) and if it is found that filename is excluded from the constructing list. So, in fact we have a more Python equivalent re.search() rather than re.match(). Because that regex expressions should be as short as possible to avoid ambiguities or/and collisions. To exclude an entire (sub)dir don't use trailing "/" (use avoid/ambiguity/dir NOT avoid/ambiguity/dir/). Meta-characters in regex acts as expected but some of them are in collision with the shell's wilcards. Depending on your OS and shell some meta-characters (eg.: "* ( ) \ |") need to be escaped in zdd shell command or put regex argument with wilcards in quotes. Please consider following examples done in Cygwin bash / W10:
+```
+    vladi@VladiLaptop1W10 ~/projects/perl/cmp1$ tree dir2
+    dir2
+    ├── df
+    ├── dir21
+    │   ├── Adresa catre DGL_10.02.2020_v1.doc
+    │   ├── Vutils1.pm
+    │   ├── dir211
+    │   │   ├── dir2111
+    │   │   │   └── utf8_2.txt
+    │   │   └── utf8_1.txt
+    │   ├── fuser
+    │   ├── test_diffFile1.txt
+    │   └── zDGL_Stulz_3v1.doc
+    ├── dir22
+    │   ├── f1.txt
+    │   └── f2.txt
+    ├── f1
+    └── raport_co.docx
+    4 directories, 12 files
+
+    vladi@VladiLaptop1W10 ~/projects/perl/cmp1$ zdd dir2	#Vld.reference case (without -i switch).
+    dir_only:
+    zip_only:
+    Altered files.
+    mtime/size[B] for dir:                            mtime/size[B] for zipFile:                        FileName:
+    Wed Dec 27 14:25:45 2023*               181       Wed Jun  1 16:53:46 2022                140       dir2/dir21/dir211/dir2111/utf8_2.txt
+    Legend: * = mark the newer file's version; ! = indicate that the older file's version has additional lines; bin = file detected as binary.
+
+    vladi@VladiLaptop1W10 ~/projects/perl/cmp1$ zdd -id dir211/ dir2	#Vld.This is NOT ok.., use directories names you want to exclude without trailing slash (see below)
+    dir_only:
+    zip_only:
+    dir2/dir21/dir211/utf8_1.txt
+    dir2/dir21/dir211/dir2111/
+    Altered files.
+    mtime/size[B] for dir:                            mtime/size[B] for zipFile:                        FileName:
+    Common files are identical. OK!
+
+    vladi@VladiLaptop1W10 ~/projects/perl/cmp1$ zdd -id dir211 dir2	#Vld.Now is OK. Compare with just above zdd command.
+    dir_only:
+    zip_only:
+    dir2/dir21/dir211/
+    Altered files.
+    mtime/size[B] for dir:                            mtime/size[B] for zipFile:                        FileName:
+    Common files are identical. OK!
+
+    vladi@VladiLaptop1W10 ~/projects/perl/cmp1$ zdd -id dir21/dir211 dir2	#Vld.Slashes don't impairs correct output. OK.
+    dir_only:
+    zip_only:
+    dir2/dir21/dir211/
+    Altered files.
+    mtime/size[B] for dir:                            mtime/size[B] for zipFile:                        FileName:
+    Common files are identical. OK!
+
+    vladi@VladiLaptop1W10 ~/projects/perl/cmp1$ zdd -id .doc$ dir2	#Vld. Observe that "." and "$" characters are NOT captured by Cygwin bash shell..
+    dir_only:
+    zip_only:
+    dir2/dir21/Adresa catre DGL_10.02.2020_v1.doc
+    dir2/dir21/zDGL_Stulz_3v1.doc
+    Altered files.
+    mtime/size[B] for dir:                            mtime/size[B] for zipFile:                        FileName:
+    Wed Dec 27 14:25:45 2023*               181       Wed Jun  1 16:53:46 2022                140       dir2/dir21/dir211/dir2111/utf8_2.txt
+    Legend: * = mark the newer file's version; ! = indicate that the older file's version has additional lines; bin = file detected as binary.
+
+    vladi@VladiLaptop1W10 ~/projects/perl/cmp1$ zdd -iz .doc$ -id dir211 dir2 #Vld. two ignores case.
+    dir_only:
+    dir2/dir21/Adresa catre DGL_10.02.2020_v1.doc
+    dir2/dir21/zDGL_Stulz_3v1.doc
+    zip_only:
+    dir2/dir21/dir211/
+    Altered files.
+    mtime/size[B] for dir:                            mtime/size[B] for zipFile:                        FileName:
+    Common files are identical. OK!
+
+    vladi@VladiLaptop1W10 ~/projects/perl/cmp1$ zdd -id f\d.txt dir2	#Vld.this don't work.(see below)
+    dir_only:
+    zip_only:
+    Altered files.
+    mtime/size[B] for dir:                            mtime/size[B] for zipFile:                        FileName:
+    Wed Dec 27 14:25:45 2023*               181       Wed Jun  1 16:53:46 2022                140       dir2/dir21/dir211/dir2111/utf8_2.txt
+    Legend: * = mark the newer file's version; ! = indicate that the older file's version has additional lines; bin = file detected as binary.
+
+    vladi@VladiLaptop1W10 ~/projects/perl/cmp1$ zdd -id f\\d.txt dir2	#Vld.Now the meta-character \ is escaped and now works OK.
+    dir_only:
+    zip_only:
+    dir2/dir22/f1.txt
+    dir2/dir22/f2.txt
+    Altered files.
+    mtime/size[B] for dir:                            mtime/size[B] for zipFile:                        FileName:
+    Wed Dec 27 14:25:45 2023*               181       Wed Jun  1 16:53:46 2022                140       dir2/dir21/dir211/dir2111/utf8_2.txt
+    Legend: * = mark the newer file's version; ! = indicate that the older file's version has additional lines; bin = file detected as binary.
+
+    vladi@VladiLaptop1W10 ~/projects/perl/cmp1$ zdd -id "f\d.txt" dir2	#Vld. -i arguments with meta-character(s)/wildcards in quotes. OK again.
+    dir_only:
+    zip_only:
+    dir2/dir22/f1.txt
+    dir2/dir22/f2.txt
+    Altered files.
+    mtime/size[B] for dir:                            mtime/size[B] for zipFile:                        FileName:
+    Wed Dec 27 14:25:45 2023*               181       Wed Jun  1 16:53:46 2022                140       dir2/dir21/dir211/dir2111/utf8_2.txt
+    Legend: * = mark the newer file's version; ! = indicate that the older file's version has additional lines; bin = file detected as binary.
+
+    vladi@VladiLaptop1W10 ~/projects/perl/cmp1$ zdd -i dir211 dir2  #dir211 directory is ignored on both dir and zipFile.
+    dir_only:
+    zip_only:
+    Altered files.
+    mtime/size[B] for dir:                            mtime/size[B] for zipFile:                        FileName:
+    Common files are identical. OK!
+```
 
 -idn, --ignoreDirName
   A command line like "zdd file.zip dir_k" will scan ONLY file.zip/dir_k (recursively). With -idn switch all file.zip archive will be scanned and compared with dir_k ("chrooted") content. To be more specific, given the foo directory and under it is our dir_k directory:
@@ -223,9 +338,10 @@ Switches (OPTIONS) are in nmap-style (e.g. "$zdd -nbm 2 dir" will not work). Ple
 	        Where we observe that there are differences in the Git repo(s).
 ```
 ### Updates
+      4. 03:45 12/30/2023:  Introduced --ignoreDir, -id; --ignoreZip, -iz; --ignore, -i options with regex expressions as argument.
       3. 21:36 9/15/2023: Introduced --exitCodeOnIdentity. -eci option.
       2. 21:19 9/14/2023: Introduced --ignoreDirName, -idn switch.
       1. 21:37 9/12/2023: Perhaps now we have support for UTF-8 file names. Note: it seems FileExplorer/W10 zip feature can not manage UTF-8 file names.. I made the (test) archive   with UTF-8 file names using zip/Cygwin..
 
 ### AUTHORS
-  Vladimir Manolescu, Bucharest, Romania, 2022, mvmanol@yahoo.com
+  Vladimir Manolescu, Bucharest, Romania, 2023, mvmanol@yahoo.com
